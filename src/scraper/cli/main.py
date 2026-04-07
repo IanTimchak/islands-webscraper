@@ -538,6 +538,7 @@ def collect_village(
             sampling_plan=sampling_plan,
             collection_plan=collection_plan,
         )
+        progress.stop()
 
     typer.echo("")
     typer.echo("Summary")
@@ -612,6 +613,7 @@ def collect_participant(
             islander_id=islander_id,
             plan=plan,
         )
+        progress.stop()
 
     typer.echo("")
     typer.echo("Participant collection result")
@@ -673,6 +675,7 @@ def collect_study_default_participant(
             islander_id=islander_id,
             plan=plan,
         )
+        progress.stop()
 
     typer.echo("")
     typer.echo("Participant collection result")
@@ -736,6 +739,7 @@ def collect_and_normalize_participant(
             plan=plan,
         )
         normalized = normalization.normalize_participant(collected)
+        progress.stop()
 
     typer.echo("")
     typer.echo("Normalized participant")
@@ -797,6 +801,7 @@ def collect_study_default_and_normalize_participant(
             plan=plan,
         )
         normalized = normalization.normalize_participant(collected)
+        progress.stop()
 
     typer.echo("")
     typer.echo("Normalized participant")
@@ -872,6 +877,7 @@ def collect_normalize_derive_participant(
         )
         normalized = normalization.normalize_participant(collected)
         analysis_row = derivation.derive_analysis_row(normalized)
+        progress.stop()
 
     typer.echo("")
     typer.echo("Analysis row")
@@ -936,6 +942,7 @@ def collect_study_default_and_derive_participant(
         )
         normalized = normalization.normalize_participant(collected)
         analysis_row = derivation.derive_analysis_row(normalized)
+        progress.stop()
 
     typer.echo("")
     typer.echo("Analysis row")
@@ -1033,6 +1040,7 @@ def collect_normalize_derive_and_save_participant(
         persistence.persist_normalized_participant(normalized)
         persistence.append_analysis_row_jsonl(analysis_row)
         persistence.write_analysis_rows_csv([analysis_row])
+        progress.stop()
 
     typer.echo(f"Saved outputs to: {persistence.output_dir}")
     typer.echo("Saved participant collection result to raw/participant_collection.jsonl")
@@ -1090,6 +1098,7 @@ def collect_study_default_and_save_participant(
         persistence.persist_normalized_participant(normalized)
         persistence.append_analysis_row_jsonl(analysis_row)
         persistence.write_analysis_rows_csv([analysis_row])
+        progress.stop()
 
     typer.echo(f"Saved outputs to: {persistence.output_dir}")
     typer.echo("Saved participant collection result to raw/participant_collection.jsonl")
@@ -1155,6 +1164,7 @@ def collect_village_data(
             sampling_plan=sampling_plan,
             collection_plan=collection_plan,
         )
+        progress.stop()
 
     typer.echo("")
     typer.echo("Summary")
@@ -1230,6 +1240,7 @@ def collect_study_default_village(
             sampling_plan=sampling_plan,
             collection_plan=collection_plan,
         )
+        progress.stop()
 
     typer.echo("")
     typer.echo("Summary")
@@ -1384,6 +1395,7 @@ def collect_village_data_and_save(
             analysis_rows.append(analysis_row)
 
         persistence.write_analysis_rows_csv(analysis_rows)
+        progress.stop()
 
     typer.echo(f"Saved outputs to: {persistence.output_dir}")
     typer.echo("Saved sampling run metadata.")
@@ -1509,6 +1521,7 @@ def collect_study_default_village_and_save(
             analysis_rows.append(analysis_row)
 
         persistence.write_analysis_rows_csv(analysis_rows)
+        progress.stop()
 
     typer.echo(f"Saved outputs to: {persistence.output_dir}")
     typer.echo("Saved sampling run metadata.")
@@ -1593,6 +1606,8 @@ def collect_study_data_and_save(
 
         all_analysis_rows = []
 
+        parsed_chat_specs = _parse_question_specs(question)
+
         study_persistence.append_jsonl_record(
             study_persistence.raw_dir / "study_run.jsonl",
             StudyRunRecord(
@@ -1602,13 +1617,11 @@ def collect_study_data_and_save(
                 reserve_n_per_village=reserve_n,
                 seed=seed,
                 summary_fields=summary_field,
-                question_keys=[spec.key for spec in _parse_question_specs(question)],
+                question_keys=[spec.key for spec in parsed_chat_specs],
             ),
         )
 
         for village_label in village_name:
-            progress.emit(0, f"=== Study village start: {village_label} ===")
-
             village = collector.fetch_village(village_label)
             result = workflow.collect_village(
                 village=village,
@@ -1696,11 +1709,10 @@ def collect_study_data_and_save(
                 village_summary,
             )
 
-            progress.emit(0, f"=== Study village end: {village_label} ===")
-
         for row in all_analysis_rows:
             study_persistence.append_analysis_row_jsonl(row)
         study_persistence.write_analysis_rows_csv(all_analysis_rows)
+        progress.stop()
 
     typer.echo(f"Saved study outputs to: {study_persistence.output_dir}")
     typer.echo(f"Villages processed: {len(village_name)}")
@@ -1790,8 +1802,6 @@ def collect_study_default_data_and_save(
         )
 
         for village_label in village_name:
-            progress.emit(0, f"=== Study village start: {village_label} ===")
-
             village = collector.fetch_village(village_label)
             result = workflow.collect_village(
                 village=village,
@@ -1879,11 +1889,10 @@ def collect_study_default_data_and_save(
                 village_summary,
             )
 
-            progress.emit(0, f"=== Study village end: {village_label} ===")
-
         for row in all_analysis_rows:
             study_persistence.append_analysis_row_jsonl(row)
         study_persistence.write_analysis_rows_csv(all_analysis_rows)
+        progress.stop()
 
     typer.echo(f"Saved study outputs to: {study_persistence.output_dir}")
     typer.echo(f"Villages processed: {len(village_name)}")
