@@ -126,12 +126,28 @@ class IslandsSession:
         )
 
     def get_consent_text(self, islander_id: str) -> str:
-        """Fetch a consent response as raw text."""
-        return self._get_text(endpoints.consent(islander_id))
+        # consent.php appears to be triggered from the islander page
+        headers = {
+            "Accept": "*/*",
+            "Referer": f"{self.base_url}islander.php?id={islander_id}",
+            "X-Requested-With": "XMLHttpRequest",
+        }
+        return self._get_text(
+            endpoints.consent(islander_id),
+            extra_headers=headers,
+        )
 
-    def get_chat_text(self, chatid: str, message: str) -> str:
-        """Fetch a direct chat response as raw text."""
-        return self._get_text(endpoints.chat(chatid, message))
+    def get_chat_text(self, chatid: str, message: str, islander_id: str) -> str:
+        # alice.php seems to expect an XHR-style request coming from the islander page
+        headers = {
+            "Accept": "*/*",
+            "Referer": f"{self.base_url}islander.php?id={islander_id}",
+            "X-Requested-With": "XMLHttpRequest",
+        }
+        return self._get_text(
+            endpoints.chat(chatid, message),
+            extra_headers=headers,
+        )
 
     def get_task_text(self, islander_id: str, code: str) -> str:
         """Fetch a task response as raw text."""

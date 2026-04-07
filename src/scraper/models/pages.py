@@ -104,25 +104,39 @@ class ChatResponse:
     # chat session used for the request
     chatid: str
 
-    # question sent to alice.php
+    # exact question sent
     question: str
 
-    # extracted plain response text
+    # extracted chatbot-visible response text
     response_text: str
+
+    # any key=value updates returned by the backend
+    state_updates: dict[str, str] = field(default_factory=dict)
+
+    # raw response split into lines for debugging
+    raw_lines: list[str] = field(default_factory=list)
 
     # full raw response body
     raw_text: str = ""
 
 
+"""
+The simulator appears to allow direct chat requests without a prior successful study-consent request in some cases. 
+However, for data collection workflows intended for the project dataset, the tool will treat consent as required 
+for inclusion and will not continue official subject collection after a declined consent response.
+"""
 @dataclass(slots=True)
 class ConsentResponse:
     # islander id used for the consent request
     islander_id: str
 
-    # parsed outcome like accept/reject/unknown
+    # parsed outcome, e.g. accept / decline
     outcome: str
 
-    # human-readable consent message if available
+    # timestamp text returned by the endpoint
+    timestamp_text: str = ""
+
+    # human-readable consent message
     message: str = ""
 
     # full raw response text

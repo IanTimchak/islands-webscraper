@@ -43,6 +43,63 @@ def fetch_village(village_name: str) -> None:
     typer.echo(f"Households found: {len(village.house_ids)}")
 
 
+@app.command("consent")
+def consent(
+    village_name: str = typer.Option(..., help="Village name where the islander was found"),
+    islander_id: str = typer.Option(..., help="Islander id"),
+) -> None:
+    ensure_auth_or_exit()
+
+    with IslandsSession.from_config() as session:
+        collector = Collector(session)
+
+        # fetch village context first
+        village = collector.fetch_village(village_name)
+
+        # fetch the islander page so consent request uses proper context
+        islander = collector.fetch_islander(village=village, islander_id=islander_id)
+
+        # send consent request
+        consent_response = collector.request_consent(islander)
+
+    typer.echo(f"Islander ID: {consent_response.islander_id}")
+    typer.echo(f"Outcome: {consent_response.outcome}")
+    typer.echo(f"Timestamp: {consent_response.timestamp_text}")
+    typer.echo(f"Message: {consent_response.message}")
+
+
+@app.command("ask")
+def ask(
+    village_name: str = typer.Option(..., help="Village name where the islander was found"),
+    islander_id: str = typer.Option(..., help="Islander id"),
+    question: str = typer.Option(..., help="Question to ask"),
+) -> None:
+    ensure_auth_or_exit()
+
+    with IslandsSession.from_config() as session:
+        collector = Collector(session)
+
+        # get village context first
+        village = collector.fetch_village(village_name)
+
+        # get islander page so we have the chatid
+        islander = collector.fetch_islander(village=village, islander_id=islander_id)
+
+        # ask the question through alice.php
+        response = collector.ask(islander=islander, question=question)
+
+    typer.echo(f"Question: {response.question}")
+    typer.echo(f"Chat ID: {response.chatid}")
+    typer.echo("")
+    typer.echo("Response:")
+    typer.echo(response.response_text or "<empty>")
+
+    typer.echo("")
+    typer.echo(f"State updates: {len(response.state_updates)}")
+    for key, value in response.state_updates.items():
+        typer.echo(f"- {key}={value}")
+
+
 @app.command("fetch-islander")
 def fetch_islander(
     village_name: str = typer.Option(..., help="Village name where the islander was found"),

@@ -31,15 +31,15 @@ Initial setup expansion — get the fetch/parse loop working for a single villag
 - [x] `IslanderPage`
 - [x] `ChatResponse`
 - [x] `ConsentResponse`
-- [ ] Expand `IslanderPage` with:
-  - [ ] `summary_lines`
-  - [ ] `current_residence`
-  - [ ] `age`
-  - [ ] `income_summary`
-  - [ ] `occupation_summary`
-  - [ ] `timeline_events`
-  - [ ] `chatid`
-  - [ ] `awake`
+- [x] Expand `IslanderPage` with:
+  - [x] `summary_lines`
+  - [x] `current_residence`
+  - [x] `age`
+  - [x] `income_summary`
+  - [x] `occupation_summary`
+  - [x] `timeline_events`
+  - [x] `chatid`
+  - [x] `awake`
 
 ## D. `parsers/village.py`
 
@@ -112,21 +112,21 @@ Initial setup expansion — get the fetch/parse loop working for a single villag
 
 ## J. `parsers/chat.py`
 
-- [ ] Parse raw `alice.php` response
-- [ ] Extract plain response text
-- [ ] Extract `key=value` updates
-- [ ] Return `ChatResponse`
+- [x] Parse raw `alice.php` response
+- [x] Extract plain response text
+- [x] Extract `key=value` updates
+- [x] Return `ChatResponse`
 
 ## K. `parsers/consent.py`
 
-- [ ] Parse semicolon-delimited consent response
-- [ ] Return `ConsentResponse`
+- [x] Parse semicolon-delimited consent response
+- [x] Return `ConsentResponse`
 
 ## L. CLI additions
 
-- [ ] `auth-test` remains manual validation
-- [ ] `ask <islander_id> "<question>"` helper command
-- [ ] `consent <islander_id>` helper command
+- [x] `auth-test` remains manual validation
+- [x] `ask <islander_id> "<question>"` helper command
+- [x] `consent <islander_id>` helper command
 
 ---
 
