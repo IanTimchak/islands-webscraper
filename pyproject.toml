@@ -18,6 +18,7 @@ dependencies = [
   "typer>=0.12",
   "python-dotenv>=1.0",
   "tenacity>=8.2",
+  "browser-cookie3>=0.19",
 ]
 
 [project.optional-dependencies]
