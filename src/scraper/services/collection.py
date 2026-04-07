@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from scraper.client.session import IslandsSession
-from scraper.models.pages import HouseholdPage, VillagePage
+from scraper.models.pages import HouseholdPage, IslanderPage, VillagePage
+from scraper.parsers.islander import parse_islander_page
 from scraper.parsers.house import parse_household_page
 from scraper.parsers.village import parse_village_page
 
@@ -28,3 +29,13 @@ class Collector:
 
         # parses it into a structured household object
         return parse_household_page(html, village_id=village.village_id, requested_house_id=house_id)
+    
+    def fetch_islander(self, village: VillagePage, islander_id: str) -> IslanderPage:
+        # gets raw islander HTML using village context
+        html = self.session.get_islander_html(
+            islander_id=islander_id,
+            village_name=village.village_name,
+        )
+
+        # parses it into a structured islander object
+        return parse_islander_page(html)

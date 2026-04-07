@@ -114,9 +114,16 @@ class IslandsSession:
             extra_headers=headers,
         )
 
-    def get_islander_html(self, islander_id: str) -> str:
-        """Fetch an islander page as raw HTML."""
-        return self._get_text(endpoints.islander_page(islander_id))
+    def get_islander_html(self, islander_id: str, village_name: str) -> str:
+        # islander.php seems to expect a normal page navigation from the village page
+        headers = {
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Referer": f"{self.base_url}village.php?{village_name}",
+        }
+        return self._get_text(
+            endpoints.islander_page(islander_id),
+            extra_headers=headers,
+        )
 
     def get_consent_text(self, islander_id: str) -> str:
         """Fetch a consent response as raw text."""

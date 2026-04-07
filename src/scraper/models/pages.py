@@ -4,6 +4,18 @@ from dataclasses import dataclass, field
 
 
 @dataclass(slots=True)
+class TimelineEvent:
+    # age header this event belongs under, e.g. 18
+    age_stage: int | None
+
+    # left-column date code, e.g. 08/372
+    date_code: str
+
+    # right-column event text
+    text: str
+
+
+@dataclass(slots=True)
 class VillagePage:
     # human-readable village name from the page/script
     village_name: str
@@ -64,6 +76,24 @@ class IslanderPage:
 
     # awake flag from page script
     awake: bool | None = None
+
+    # raw summary lines from the top summary table
+    summary_lines: list[str] = field(default_factory=list)
+
+    # parsed age if present
+    age: int | None = None
+
+    # parsed summary occupation if present
+    occupation_summary: str | None = None
+
+    # parsed summary money if present
+    money_summary: str | None = None
+
+    # parsed current residence line if present
+    current_residence: str | None = None
+
+    # raw timeline events
+    timeline_events: list[TimelineEvent] = field(default_factory=list)
 
     # full raw HTML for debugging/re-parsing
     raw_html: str = ""

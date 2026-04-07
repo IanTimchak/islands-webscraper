@@ -43,6 +43,34 @@ def fetch_village(village_name: str) -> None:
     typer.echo(f"Households found: {len(village.house_ids)}")
 
 
+@app.command("fetch-islander")
+def fetch_islander(
+    village_name: str = typer.Option(..., help="Village name where the islander was found"),
+    islander_id: str = typer.Option(..., help="Islander id"),
+) -> None:
+    ensure_auth_or_exit()
+
+    with IslandsSession.from_config() as session:
+        collector = Collector(session)
+        village = collector.fetch_village(village_name)
+        islander = collector.fetch_islander(village=village, islander_id=islander_id)
+
+    typer.echo(f"Name: {islander.name}")
+    typer.echo(f"Islander ID: {islander.islander_id}")
+    typer.echo(f"Chat ID: {islander.chatid}")
+    typer.echo(f"Awake: {islander.awake}")
+    typer.echo(f"Age: {islander.age}")
+    typer.echo(f"Occupation summary: {islander.occupation_summary}")
+    typer.echo(f"Money summary: {islander.money_summary}")
+    typer.echo(f"Current residence: {islander.current_residence}")
+    typer.echo(f"Timeline events: {len(islander.timeline_events)}")
+
+    for event in islander.timeline_events[:5]:
+        typer.echo(
+            f"- age_stage={event.age_stage} | {event.date_code} | {event.text}"
+        )
+
+
 @app.command("fetch-household")
 def fetch_household(
     village_name: str = typer.Option(..., help="Village name, e.g. Vardo"),

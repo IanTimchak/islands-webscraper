@@ -87,24 +87,24 @@ Initial setup expansion — get the fetch/parse loop working for a single villag
 
 ## H. `parsers/islander.py`
 
-- [ ] Parse islander id from script/page
-- [ ] Parse displayed name
-- [ ] Parse `chatid`
-- [ ] Parse `awake`
-- [ ] Parse summary lines
-- [ ] Parse current residence
-- [ ] Parse age
-- [ ] Parse income summary
-- [ ] Parse occupation summary
-- [ ] Parse timeline events
-- [ ] Return `IslanderPage`
+- [x] Parse islander id from script/page
+- [x] Parse displayed name
+- [x] Parse `chatid`
+- [x] Parse `awake`
+- [x] Parse summary lines
+- [x] Parse current residence
+- [x] Parse age
+- [x] Parse money summary
+- [x] Parse occupation summary
+- [x] Parse timeline events
+- [x] Return `IslanderPage`
 
 ## I. CLI additions
 
-- [ ] `fetch-islander <islander_id>`
-- [ ] Print name, chatid, awake status
-- [ ] Print summary lines
-- [ ] Print first few timeline events
+- [x] `fetch-islander <islander_id>`
+- [x] Print name, chatid, awake status
+- [x] Print summary lines
+- [x] Print first few timeline events
 
 ---
 
