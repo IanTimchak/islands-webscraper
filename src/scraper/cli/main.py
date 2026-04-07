@@ -43,6 +43,35 @@ def fetch_village(village_name: str) -> None:
     typer.echo(f"Households found: {len(village.house_ids)}")
 
 
+@app.command("fetch-household")
+def fetch_household(
+    village_name: str = typer.Option(..., help="Village name, e.g. Vardo"),
+    house_id: int = typer.Option(..., help="Internal house id"),
+) -> None:
+    ensure_auth_or_exit()
+
+    with IslandsSession.from_config() as session:
+        collector = Collector(session)
+
+        # get the village object first so household fetch uses the full context
+        village = collector.fetch_village(village_name)
+        household = collector.fetch_household(village=village, house_id=house_id)
+
+    typer.echo(f"Village: {village.village_name}")
+    typer.echo(f"Village ID: {household.village_id}")
+    typer.echo(f"Internal House ID: {household.house_id}")
+
+    if household.display_house_number is not None:
+        typer.echo(f"Displayed House Number: {household.display_house_number}")
+
+    typer.echo(f"Residents found: {len(household.residents)}")
+
+    for idx, resident in enumerate(household.residents, start=1):
+        typer.echo(
+            f"{idx}. {resident.name} | age={resident.age} | islander_id={resident.islander_id}"
+        )
+
+
 @app.command("auth-login")
 def auth_login(
     browser: str = typer.Option(..., help="Browser to use: chrome or firefox"),

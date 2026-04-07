@@ -88,10 +88,13 @@ class IslandsSession:
         """Sleep for a polite, jittered interval before a request."""
         time.sleep(self.timing.next_delay())
 
-    def _get_text(self, path: str) -> str:
-        """Perform a GET request and return the response body as text."""
+    def _get_text(self, path: str, extra_headers: dict[str, str] | None = None) -> str:
+        # polite delay before request
         self._sleep()
-        response = self._client.get(path)
+
+        headers = extra_headers or {}
+        response = self._client.get(path, headers=headers)
+
         response.raise_for_status()
         return response.text
 
@@ -99,9 +102,17 @@ class IslandsSession:
         """Fetch a village page as raw HTML."""
         return self._get_text(endpoints.village_page(village_name))
 
-    def get_house_html(self, village_id: int, house_id: int) -> str:
-        """Fetch a household page as raw HTML."""
-        return self._get_text(endpoints.house_page(village_id, house_id))
+    def get_house_html(self, village_id: int, house_id: int, village_name: str) -> str:
+        # this endpoint seems to want to look like an XHR from the village page
+        headers = {
+            "Accept": "*/*",
+            "Referer": f"{self.base_url}village.php?{village_name}",
+            "X-Requested-With": "XMLHttpRequest",
+        }
+        return self._get_text(
+            endpoints.house_page(village_id, house_id),
+            extra_headers=headers,
+        )
 
     def get_islander_html(self, islander_id: str) -> str:
         """Fetch an islander page as raw HTML."""

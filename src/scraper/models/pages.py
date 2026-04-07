@@ -38,8 +38,11 @@ class HouseholdPage:
     # internal numeric village id
     village_id: int
 
-    # internal house id
+    # requested internal house id used in house.php?v=...&h=...
     house_id: int
+
+    # displayed house number from the page title, if present
+    display_house_number: int | None = None
 
     # residents listed in the house response
     residents: list[Resident] = field(default_factory=list)

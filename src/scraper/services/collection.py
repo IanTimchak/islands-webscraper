@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from scraper.client.session import IslandsSession
-from scraper.models.pages import VillagePage
+from scraper.models.pages import HouseholdPage, VillagePage
+from scraper.parsers.house import parse_household_page
 from scraper.parsers.village import parse_village_page
 
 
@@ -16,3 +17,14 @@ class Collector:
 
         # parses it into a structured page object
         return parse_village_page(html)
+
+    def fetch_household(self, village: VillagePage, house_id: int) -> HouseholdPage:
+        # gets raw household HTML using village context
+        html = self.session.get_house_html(
+            village_id=village.village_id,
+            house_id=house_id,
+            village_name=village.village_name,
+        )
+
+        # parses it into a structured household object
+        return parse_household_page(html, village_id=village.village_id, requested_house_id=house_id)
