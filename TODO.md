@@ -6,18 +6,18 @@ Initial setup expansion — get the fetch/parse loop working for a single villag
 
 ## A. `client/endpoints.py`
 
-- [ ] `village_page(village_name: str) -> str`
-- [ ] `house_page(village_id: int, house_id: int) -> str`
-- [ ] `islander_page(islander_id: str) -> str`
-- [ ] `consent(islander_id: str) -> str`
-- [ ] `chat(chatid: str, message: str) -> str`
+- [x] `village_page(village_name: str) -> str`
+- [x] `house_page(village_id: int, house_id: int) -> str`
+- [x] `islander_page(islander_id: str) -> str`
+- [x] `consent(islander_id: str) -> str`
+- [x] `chat(chatid: str, message: str) -> str`
 
 ## B. `client/session.py`
 
-- [ ] Authenticated `httpx.Client` wrapper
-- [ ] `IslandsSession.from_env()`
-- [ ] `IslandsSession.from_cookie_header(base_url, cookie_header)`
-- [ ] Basic timeout and retry config
+- [x] Authenticated `httpx.Client` wrapper
+- [x] `IslandsSession.from_env()`
+- [x] `IslandsSession.from_cookie_header(base_url, cookie_header)`
+- [x] Basic timeout and retry config
 
 ## C. `models/pages.py`
 
