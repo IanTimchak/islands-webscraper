@@ -22,6 +22,10 @@ from scraper.services.data_collection import DataCollectionService
 from scraper.services.progress import ConsoleProgressReporter
 from scraper.services.sampling import SamplingService
 from scraper.services.workflow import CollectionWorkflow
+from scraper.services.normalization import NormalizationService
+from scraper.services.derivation import DerivationService
+from scraper.services.normalization import NormalizationService
+from scraper.study_profile import VILLAGE_TO_ISLAND
 
 app = typer.Typer(help="Islands webscraper CLI")
 
@@ -36,6 +40,213 @@ def main() -> None:
 def hello() -> None:
     # quick sanity check that the CLI is wired up
     print("islands-webscraper is set up")
+
+
+@app.command("collect-normalize-derive-participant")
+def collect_normalize_derive_participant(
+    village_name: str = typer.Option(..., help="Village name where the islander was found"),
+    islander_id: str = typer.Option(..., help="Islander id"),
+    summary_field: list[str] = typer.Option(
+        [],
+        help="Summary field source name to collect. Repeat this option for multiple fields.",
+    ),
+    question: list[str] = typer.Option(
+        [],
+        help='Chat question spec in the form key="Question text". Repeat for multiple questions.',
+    ),
+    include_timeline: bool = typer.Option(True, help="Include raw timeline events"),
+    progress_level: int = typer.Option(1, help="Progress detail level: 0, 1, or 2"),
+) -> None:
+    ensure_auth_or_exit()
+
+    summary_specs = [
+        SummaryFieldSpec(key=field_name, source=field_name, required=False)
+        for field_name in summary_field
+    ]
+
+    chat_specs: list[ChatQuestionSpec] = []
+    for raw_question in question:
+        if "=" not in raw_question:
+            raise typer.BadParameter(
+                f"Question spec must look like key=Question text, got: {raw_question!r}"
+            )
+
+        key, question_text = raw_question.split("=", 1)
+        key = key.strip()
+        question_text = question_text.strip()
+
+        if not key or not question_text:
+            raise typer.BadParameter(
+                f"Question spec must include both key and question text, got: {raw_question!r}"
+            )
+
+        chat_specs.append(
+            ChatQuestionSpec(
+                key=key,
+                question_text=question_text,
+                required=False,
+            )
+        )
+
+    plan = CollectionPlan(
+        include_summary=True,
+        include_timeline=include_timeline,
+        summary_fields=summary_specs,
+        chat_questions=chat_specs,
+    )
+
+    with IslandsSession.from_config() as session:
+        collector = Collector(session)
+        progress = ConsoleProgressReporter(max_level=progress_level)
+        data_collection = DataCollectionService(
+            collector=collector,
+            progress=progress,
+        )
+        normalization = NormalizationService()
+        derivation = DerivationService(VILLAGE_TO_ISLAND)
+
+        village = collector.fetch_village(village_name)
+        collected = data_collection.collect_participant(
+            village=village,
+            islander_id=islander_id,
+            plan=plan,
+        )
+        normalized = normalization.normalize_participant(collected)
+        analysis_row = derivation.derive_analysis_row(normalized)
+
+    typer.echo("")
+    typer.echo("Analysis row")
+    typer.echo(f"Village: {analysis_row.village_name}")
+    typer.echo(f"Village ID: {analysis_row.village_id}")
+    typer.echo(f"Island ID: {analysis_row.island_id}")
+    typer.echo(f"Name: {analysis_row.islander_name}")
+    typer.echo(f"Islander ID: {analysis_row.islander_id}")
+
+    typer.echo("")
+    typer.echo("Derived fields")
+    typer.echo(f"  age: {analysis_row.age}")
+    typer.echo(f"  current_village: {analysis_row.current_village}")
+    typer.echo(f"  current_island_id: {analysis_row.current_island_id}")
+    typer.echo(f"  birth_village: {analysis_row.birth_village}")
+    typer.echo(f"  birth_island_id: {analysis_row.birth_island_id}")
+    typer.echo(f"  immigrant_other_island: {analysis_row.immigrant_other_island}")
+
+    typer.echo("")
+    typer.echo("Carry-through fields")
+    typer.echo(f"  current_residence_raw: {analysis_row.current_residence_raw}")
+    typer.echo(f"  money_summary_raw: {analysis_row.money_summary_raw}")
+    typer.echo(f"  money_summary_value: {analysis_row.money_summary_value}")
+    typer.echo(f"  income_response_raw: {analysis_row.income_response_raw}")
+    typer.echo(f"  income_numeric: {analysis_row.income_numeric}")
+    typer.echo(f"  income_text_normalized: {analysis_row.income_text_normalized}")
+    typer.echo(f"  occupation_text: {analysis_row.occupation_text}")
+
+    typer.echo("")
+    typer.echo(f"Education events: {len(analysis_row.education_events)}")
+    for event_text in analysis_row.education_events[:10]:
+        typer.echo(f"  - {event_text}")
+
+
+@app.command("collect-and-normalize-participant")
+def collect_and_normalize_participant(
+    village_name: str = typer.Option(..., help="Village name where the islander was found"),
+    islander_id: str = typer.Option(..., help="Islander id"),
+    summary_field: list[str] = typer.Option(
+        [],
+        help="Summary field source name to collect. Repeat this option for multiple fields.",
+    ),
+    question: list[str] = typer.Option(
+        [],
+        help='Chat question spec in the form key="Question text". Repeat for multiple questions.',
+    ),
+    include_timeline: bool = typer.Option(True, help="Include raw timeline events"),
+    progress_level: int = typer.Option(1, help="Progress detail level: 0, 1, or 2"),
+) -> None:
+    ensure_auth_or_exit()
+
+    summary_specs = [
+        SummaryFieldSpec(key=field_name, source=field_name, required=False)
+        for field_name in summary_field
+    ]
+
+    chat_specs: list[ChatQuestionSpec] = []
+    for raw_question in question:
+        if "=" not in raw_question:
+            raise typer.BadParameter(
+                f"Question spec must look like key=Question text, got: {raw_question!r}"
+            )
+
+        key, question_text = raw_question.split("=", 1)
+        key = key.strip()
+        question_text = question_text.strip()
+
+        if not key or not question_text:
+            raise typer.BadParameter(
+                f"Question spec must include both key and question text, got: {raw_question!r}"
+            )
+
+        chat_specs.append(
+            ChatQuestionSpec(
+                key=key,
+                question_text=question_text,
+                required=False,
+            )
+        )
+
+    plan = CollectionPlan(
+        include_summary=True,
+        include_timeline=include_timeline,
+        summary_fields=summary_specs,
+        chat_questions=chat_specs,
+    )
+
+    with IslandsSession.from_config() as session:
+        collector = Collector(session)
+        progress = ConsoleProgressReporter(max_level=progress_level)
+        data_collection = DataCollectionService(
+            collector=collector,
+            progress=progress,
+        )
+        normalization = NormalizationService()
+
+        village = collector.fetch_village(village_name)
+        collected = data_collection.collect_participant(
+            village=village,
+            islander_id=islander_id,
+            plan=plan,
+        )
+        normalized = normalization.normalize_participant(collected)
+
+    typer.echo("")
+    typer.echo("Normalized participant")
+    typer.echo(f"Village: {normalized.village_name}")
+    typer.echo(f"Village ID: {normalized.village_id}")
+    typer.echo(f"Island ID: {normalized.island_id}")
+    typer.echo(f"Name: {normalized.islander_name}")
+    typer.echo(f"Islander ID: {normalized.islander_id}")
+
+    typer.echo("")
+    typer.echo("Normalized fields")
+    typer.echo(f"  age: {normalized.age}")
+    typer.echo(f"  current_residence_raw: {normalized.current_residence_raw}")
+    typer.echo(f"  current_village: {normalized.current_village}")
+    typer.echo(f"  current_house_number: {normalized.current_house_number}")
+    typer.echo(f"  money_summary_raw: {normalized.money_summary_raw}")
+    typer.echo(f"  money_summary_value: {normalized.money_summary_value}")
+    typer.echo(f"  birth_village_raw: {normalized.birth_village_raw}")
+    typer.echo(f"  birth_village: {normalized.birth_village}")
+    typer.echo(f"  income_response_raw: {normalized.income_response_raw}")
+    typer.echo(f"  income_numeric: {normalized.income_numeric}")
+    typer.echo(f"  income_text_normalized: {normalized.income_text_normalized}")
+    typer.echo(f"  occupation_from_income_raw: {normalized.occupation_from_income_raw}")
+    typer.echo(f"  occupation_summary_raw: {normalized.occupation_summary_raw}")
+    typer.echo(f"  occupation_chat_raw: {normalized.occupation_chat_raw}")
+    typer.echo(f"  occupation_text: {normalized.occupation_text}")
+
+    typer.echo("")
+    typer.echo(f"Education events: {len(normalized.education_events)}")
+    for event_text in normalized.education_events[:10]:
+        typer.echo(f"  - {event_text}")
 
 
 @app.command("collect-village-data")

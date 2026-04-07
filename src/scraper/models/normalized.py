@@ -154,3 +154,37 @@ class VillageDataCollectionResult:
     collected_participant_results: list[ParticipantCollectionResult] = field(default_factory=list)
 
     exhausted_reserve: bool = False
+
+
+# normalization
+@dataclass(slots=True)
+class NormalizedParticipant:
+    village_name: str
+    village_id: int
+    island_id: int
+
+    islander_id: str
+    islander_name: str
+
+    age: int | None = None
+
+    current_residence_raw: str | None = None
+    current_village: str | None = None
+    current_house_number: int | None = None
+
+    money_summary_raw: str | None = None
+    money_summary_value: int | None = None
+
+    birth_village_raw: str | None = None
+    birth_village: str | None = None
+
+    income_response_raw: str | None = None
+    income_numeric: int | None = None
+    income_text_normalized: str | None = None
+
+    occupation_from_income_raw: str | None = None
+    occupation_summary_raw: str | None = None
+    occupation_chat_raw: str | None = None
+    occupation_text: str | None = None
+
+    education_events: list[str] = field(default_factory=list)
