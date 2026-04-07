@@ -1,7 +1,25 @@
 from __future__ import annotations
 
+"""Main CLI entry point for the Islands webscraper.
+
+This module is intentionally the most visible developer surface in the project.
+It should therefore do three things well:
+
+1. expose the available workflows clearly,
+2. document the common extension points for new studies,
+3. keep console rendering separate from workflow orchestration.
+
+A recurring maintenance pain point in earlier versions of this file was that
+study-specific console output lived inline inside otherwise generic commands.
+That made the CLI harder to scan and forced future studies to edit command
+bodies just to change presentation. The refactor below keeps the workflow
+logic intact, but moves most user-facing formatting into small renderer helpers
+and explicit field lists so the file stays easier to extend.
+"""
+
 from datetime import datetime
 from uuid import uuid4
+from typing import Any, Iterable, Mapping
 
 import typer
 
@@ -178,6 +196,323 @@ def _build_study_default_collection_plan(include_timeline: bool = True) -> Colle
             ),
         ],
     )
+
+
+# -----------------------------------------------------------------------------
+# Console rendering helpers
+# -----------------------------------------------------------------------------
+#
+# The command functions below should primarily orchestrate the workflow:
+# validate auth, build plans, call services, and persist results.
+#
+# Any output that is mainly "how we print a result" belongs in helpers in this
+# section. Keeping these renderers centralized makes the command bodies shorter
+# and makes study-specific presentation easier to swap out later.
+# -----------------------------------------------------------------------------
+
+
+STUDY_DEFAULT_QUESTION_SPECS = [
+    "birth_village=Which village were you born in?",
+    "income=What is your income?",
+]
+
+STUDY_NORMALIZED_FIELD_NAMES = [
+    "age",
+    "current_residence_raw",
+    "current_village",
+    "current_house_number",
+    "money_summary_raw",
+    "money_summary_value",
+    "birth_village_raw",
+    "birth_village",
+    "income_response_raw",
+    "income_numeric",
+    "income_text_normalized",
+    "occupation_from_income_raw",
+    "occupation_summary_raw",
+    "occupation_chat_raw",
+    "occupation_text",
+]
+
+STUDY_ANALYSIS_DERIVED_FIELD_NAMES = [
+    "age",
+    "current_village",
+    "current_island_id",
+    "birth_village",
+    "birth_island_id",
+    "immigrant_other_island",
+]
+
+STUDY_ANALYSIS_CARRY_FIELD_NAMES = [
+    "current_residence_raw",
+    "money_summary_raw",
+    "money_summary_value",
+    "income_response_raw",
+    "income_numeric",
+    "income_text_normalized",
+    "occupation_text",
+]
+
+STUDY_ANALYSIS_EDUCATION_FIELD_NAMES = [
+    "latest_education_event",
+    "education_label",
+]
+
+
+def _echo_blank() -> None:
+    """Print one blank line to visually separate output sections."""
+    typer.echo("")
+
+
+def _echo_title(title: str) -> None:
+    """Print a section title with a leading blank line for readability."""
+    _echo_blank()
+    typer.echo(title)
+
+
+def _echo_key_value(label: str, value: Any, *, indent: str = "") -> None:
+    """Print one label/value line with optional indentation."""
+    typer.echo(f"{indent}{label}: {value}")
+
+
+def _echo_key_values(
+    pairs: Iterable[tuple[str, Any]],
+    *,
+    indent: str = "",
+) -> None:
+    """Print a sequence of (label, value) pairs in order."""
+    for label, value in pairs:
+        _echo_key_value(label, value, indent=indent)
+
+
+def _echo_mapping(
+    title: str,
+    mapping: Mapping[str, Any],
+    *,
+    indent: str = "  ",
+    empty_text: str = "<none>",
+) -> None:
+    """Print a mapping under a titled section, preserving insertion order."""
+    _echo_title(title)
+    if not mapping:
+        typer.echo(f"{indent}{empty_text}")
+        return
+
+    for key, value in mapping.items():
+        _echo_key_value(key, value, indent=indent)
+
+
+def _echo_object_fields(
+    title: str,
+    obj: Any,
+    field_names: Iterable[str],
+    *,
+    indent: str = "  ",
+) -> None:
+    """Print selected attributes from an object using an explicit field order."""
+    _echo_title(title)
+    for field_name in field_names:
+        _echo_key_value(field_name, getattr(obj, field_name, None), indent=indent)
+
+
+def _response_text(response: Any) -> str:
+    """Extract a printable response string from a chat response-like object."""
+    text = getattr(response, "response_text", response)
+    return text if text not in (None, "") else "<empty>"
+
+
+def _echo_chat_mapping(
+    title: str,
+    mapping: Mapping[str, Any],
+    *,
+    indent: str = "  ",
+    empty_text: str = "<none>",
+) -> None:
+    """Print chat responses while hiding the concrete response object shape."""
+    _echo_title(title)
+    if not mapping:
+        typer.echo(f"{indent}{empty_text}")
+        return
+
+    for key, response in mapping.items():
+        _echo_key_value(key, _response_text(response), indent=indent)
+
+
+def _render_participant_collection_result(result: Any) -> None:
+    """Render a collected participant result in a generic, plan-driven way."""
+    _echo_title("Participant collection result")
+    _echo_key_values(
+        [
+            ("Village", result.village_name),
+            ("Village ID", result.village_id),
+            ("Island ID", result.island_id),
+            ("Name", result.islander_name),
+            ("Islander ID", result.islander_id),
+        ]
+    )
+    _echo_mapping("Summary data", result.summary_data)
+    _echo_chat_mapping("Chat data", result.chat_data)
+    _echo_blank()
+    typer.echo(f"Timeline events: {len(result.timeline_events)}")
+
+
+def _render_normalized_participant(result: Any) -> None:
+    """Render the normalized participant view used by the current study."""
+    _echo_title("Normalized participant")
+    _echo_key_values(
+        [
+            ("Village", result.village_name),
+            ("Village ID", result.village_id),
+            ("Island ID", result.island_id),
+            ("Name", result.islander_name),
+            ("Islander ID", result.islander_id),
+        ]
+    )
+    _echo_object_fields("Normalized fields", result, STUDY_NORMALIZED_FIELD_NAMES)
+
+    _echo_blank()
+    typer.echo(f"Education events: {len(result.education_events)}")
+    for event_text in result.education_events[:10]:
+        typer.echo(f"  - {event_text}")
+
+
+def _render_analysis_row(result: Any) -> None:
+    """Render the study's derived analysis row in grouped sections."""
+    _echo_title("Analysis row")
+    _echo_key_values(
+        [
+            ("Village", result.village_name),
+            ("Village ID", result.village_id),
+            ("Island ID", result.island_id),
+            ("Name", result.islander_name),
+            ("Islander ID", result.islander_id),
+        ]
+    )
+    _echo_object_fields("Derived fields", result, STUDY_ANALYSIS_DERIVED_FIELD_NAMES)
+    _echo_object_fields("Carry-through fields", result, STUDY_ANALYSIS_CARRY_FIELD_NAMES)
+    _echo_object_fields("Education", result, STUDY_ANALYSIS_EDUCATION_FIELD_NAMES)
+
+
+def _render_sample_village_result(result: Any) -> None:
+    """Render the output of the sampling-only village workflow."""
+    _echo_key_values(
+        [
+            ("Village", result.village_name),
+            ("Village ID", result.village_id),
+            ("Island ID", result.island_id),
+            ("Frame size", result.frame_size),
+            ("Primary households", result.primary_household_ids),
+            ("Reserve households", result.reserve_household_ids),
+        ]
+    )
+
+    _echo_blank()
+    for sampled in result.sampled_households:
+        header = f"House internal_id={sampled.house_id}"
+        if sampled.display_house_number is not None:
+            header += f", display={sampled.display_house_number}"
+        typer.echo(header)
+        typer.echo(f"  residents={len(sampled.residents)}")
+        typer.echo(f"  eligible_adults={len(sampled.eligible_adults)}")
+        typer.echo(f"  status={sampled.status}")
+
+        if sampled.selected_adult is not None:
+            typer.echo(
+                f"  selected={sampled.selected_adult.name} "
+                f"(age={sampled.selected_adult.age}, islander_id={sampled.selected_adult.islander_id})"
+            )
+        else:
+            typer.echo("  selected=None")
+
+        _echo_blank()
+
+
+def _render_village_collection_summary(
+    result: Any,
+    *,
+    include_collected_payloads: bool = False,
+) -> None:
+    """Render a village workflow summary with optional collected participant details."""
+    _echo_title("Summary")
+    summary_pairs = [
+        ("Village", result.village_name),
+        ("Village ID", getattr(result, "village_id", None)),
+        ("Island ID", getattr(result, "island_id", None)),
+        ("Frame size", getattr(result, "frame_size", None)),
+        ("Processed households", len(result.processed_households)),
+        ("Reserve exhausted", result.exhausted_reserve),
+    ]
+
+    if hasattr(result, "primary_household_ids"):
+        summary_pairs.insert(4, ("Primary households", result.primary_household_ids))
+    if hasattr(result, "reserve_household_ids"):
+        summary_pairs.insert(5, ("Reserve households", result.reserve_household_ids))
+    if hasattr(result, "completed_participants"):
+        summary_pairs.append(("Completed participants", len(result.completed_participants)))
+    if hasattr(result, "collected_participant_results"):
+        summary_pairs.append(
+            ("Completed collected participants", len(result.collected_participant_results))
+        )
+
+    _echo_key_values(summary_pairs)
+
+    if getattr(result, "completed_participants", None):
+        _echo_title("Completed participants")
+        for idx, participant in enumerate(result.completed_participants, start=1):
+            adult = participant.selected_adult
+            line = (
+                f"{idx}. {adult.name} | age={adult.age} | islander_id={adult.islander_id} "
+                f"| house_id={participant.house_id}"
+            )
+            if participant.display_house_number is not None:
+                line += f" | display_house={participant.display_house_number}"
+            typer.echo(line)
+
+    if include_collected_payloads and getattr(result, "collected_participant_results", None):
+        _echo_title("Collected participants")
+        for idx, participant in enumerate(result.collected_participant_results, start=1):
+            typer.echo(f"{idx}. {participant.islander_name} | islander_id={participant.islander_id}")
+
+            if participant.summary_data:
+                typer.echo("   Summary:")
+                for key, value in participant.summary_data.items():
+                    typer.echo(f"     {key}: {value}")
+
+            if participant.chat_data:
+                typer.echo("   Chat:")
+                for key, response in participant.chat_data.items():
+                    typer.echo(f"     {key}: {_response_text(response)}")
+
+
+def _render_participant_save_summary(output_dir: Any) -> None:
+    """Render the standard save receipt for one participant run."""
+    typer.echo(f"Saved outputs to: {output_dir}")
+    typer.echo("Saved participant collection result to raw/participant_collection.jsonl")
+    typer.echo("Saved normalized participant to normalized/participants.jsonl")
+    typer.echo("Saved analysis row to analysis/analysis_rows.jsonl and analysis/analysis_rows.csv")
+
+
+def _render_village_save_summary(output_dir: Any) -> None:
+    """Render the standard save receipt for one village run."""
+    typer.echo(f"Saved outputs to: {output_dir}")
+    typer.echo("Saved sampling run metadata.")
+    typer.echo("Saved processed household audit records.")
+    typer.echo("Saved participant collection records.")
+    typer.echo("Saved normalized participant records.")
+    typer.echo("Saved analysis rows to JSONL and CSV.")
+
+
+def _render_study_save_summary(output_dir: Any, village_count: int, analysis_row_count: int) -> None:
+    """Render the standard save receipt for a multi-village study run."""
+    typer.echo(f"Saved study outputs to: {output_dir}")
+    typer.echo(f"Villages processed: {village_count}")
+    typer.echo(f"Total analysis rows: {analysis_row_count}")
+
+
+def _render_resume_summary(output_dir: Any, analysis_row_count: int) -> None:
+    """Render the standard receipt after resuming a study run."""
+    typer.echo(f"Resumed study outputs in: {output_dir}")
+    typer.echo(f"Total new analysis rows written in this resume pass: {analysis_row_count}")
 
 
 # auth commands
@@ -441,36 +776,7 @@ def sample_village(
 
         result = sampling.sample_village(village=village, plan=plan)
 
-    typer.echo(f"Village: {result.village_name}")
-    typer.echo(f"Village ID: {result.village_id}")
-    typer.echo(f"Island ID: {result.island_id}")
-    typer.echo(f"Frame size: {result.frame_size}")
-    typer.echo(f"Primary households: {result.primary_household_ids}")
-    typer.echo(f"Reserve households: {result.reserve_household_ids}")
-    typer.echo("")
-
-    for sampled in result.sampled_households:
-        typer.echo(
-            f"House internal_id={sampled.house_id}"
-            + (
-                f", display={sampled.display_house_number}"
-                if sampled.display_house_number is not None
-                else ""
-            )
-        )
-        typer.echo(f"  residents={len(sampled.residents)}")
-        typer.echo(f"  eligible_adults={len(sampled.eligible_adults)}")
-        typer.echo(f"  status={sampled.status}")
-
-        if sampled.selected_adult is not None:
-            typer.echo(
-                f"  selected={sampled.selected_adult.name} "
-                f"(age={sampled.selected_adult.age}, islander_id={sampled.selected_adult.islander_id})"
-            )
-        else:
-            typer.echo("  selected=None")
-
-        typer.echo("")
+    _render_sample_village_result(result)
 
 
 @app.command("collect-village")
@@ -534,31 +840,7 @@ def collect_village(
         )
         progress.stop()
 
-    typer.echo("")
-    typer.echo("Summary")
-    typer.echo(f"Village: {result.village_name}")
-    typer.echo(f"Village ID: {result.village_id}")
-    typer.echo(f"Island ID: {result.island_id}")
-    typer.echo(f"Frame size: {result.frame_size}")
-    typer.echo(f"Primary households: {result.primary_household_ids}")
-    typer.echo(f"Reserve households: {result.reserve_household_ids}")
-    typer.echo(f"Processed households: {len(result.processed_households)}")
-    typer.echo(f"Completed participants: {len(result.completed_participants)}")
-    typer.echo(f"Reserve exhausted: {result.exhausted_reserve}")
-
-    typer.echo("")
-    typer.echo("Completed participants")
-    for idx, participant in enumerate(result.completed_participants, start=1):
-        adult = participant.selected_adult
-        typer.echo(
-            f"{idx}. {adult.name} | age={adult.age} | islander_id={adult.islander_id} "
-            f"| house_id={participant.house_id}"
-            + (
-                f" | display_house={participant.display_house_number}"
-                if participant.display_house_number is not None
-                else ""
-            )
-        )
+    _render_village_collection_summary(result)
 
 
 # collection commands
@@ -609,32 +891,7 @@ def collect_participant(
         )
         progress.stop()
 
-    typer.echo("")
-    typer.echo("Participant collection result")
-    typer.echo(f"Village: {result.village_name}")
-    typer.echo(f"Village ID: {result.village_id}")
-    typer.echo(f"Island ID: {result.island_id}")
-    typer.echo(f"Name: {result.islander_name}")
-    typer.echo(f"Islander ID: {result.islander_id}")
-
-    typer.echo("")
-    typer.echo("Summary data")
-    if not result.summary_data:
-        typer.echo("  <none>")
-    else:
-        for key, value in result.summary_data.items():
-            typer.echo(f"  {key}: {value}")
-
-    typer.echo("")
-    typer.echo("Chat data")
-    if not result.chat_data:
-        typer.echo("  <none>")
-    else:
-        for key, response in result.chat_data.items():
-            typer.echo(f"  {key}: {response.response_text}")
-
-    typer.echo("")
-    typer.echo(f"Timeline events: {len(result.timeline_events)}")
+    _render_participant_collection_result(result)
 
 
 @app.command("collect-study-default-participant")
@@ -671,26 +928,7 @@ def collect_study_default_participant(
         )
         progress.stop()
 
-    typer.echo("")
-    typer.echo("Participant collection result")
-    typer.echo(f"Village: {result.village_name}")
-    typer.echo(f"Village ID: {result.village_id}")
-    typer.echo(f"Island ID: {result.island_id}")
-    typer.echo(f"Name: {result.islander_name}")
-    typer.echo(f"Islander ID: {result.islander_id}")
-
-    typer.echo("")
-    typer.echo("Summary data")
-    for key, value in result.summary_data.items():
-        typer.echo(f"  {key}: {value}")
-
-    typer.echo("")
-    typer.echo("Chat data")
-    for key, response in result.chat_data.items():
-        typer.echo(f"  {key}: {response.response_text}")
-
-    typer.echo("")
-    typer.echo(f"Timeline events: {len(result.timeline_events)}")
+    _render_participant_collection_result(result)
 
 
 @app.command("collect-and-normalize-participant")
@@ -735,36 +973,7 @@ def collect_and_normalize_participant(
         normalized = normalization.normalize_participant(collected)
         progress.stop()
 
-    typer.echo("")
-    typer.echo("Normalized participant")
-    typer.echo(f"Village: {normalized.village_name}")
-    typer.echo(f"Village ID: {normalized.village_id}")
-    typer.echo(f"Island ID: {normalized.island_id}")
-    typer.echo(f"Name: {normalized.islander_name}")
-    typer.echo(f"Islander ID: {normalized.islander_id}")
-
-    typer.echo("")
-    typer.echo("Normalized fields")
-    typer.echo(f"  age: {normalized.age}")
-    typer.echo(f"  current_residence_raw: {normalized.current_residence_raw}")
-    typer.echo(f"  current_village: {normalized.current_village}")
-    typer.echo(f"  current_house_number: {normalized.current_house_number}")
-    typer.echo(f"  money_summary_raw: {normalized.money_summary_raw}")
-    typer.echo(f"  money_summary_value: {normalized.money_summary_value}")
-    typer.echo(f"  birth_village_raw: {normalized.birth_village_raw}")
-    typer.echo(f"  birth_village: {normalized.birth_village}")
-    typer.echo(f"  income_response_raw: {normalized.income_response_raw}")
-    typer.echo(f"  income_numeric: {normalized.income_numeric}")
-    typer.echo(f"  income_text_normalized: {normalized.income_text_normalized}")
-    typer.echo(f"  occupation_from_income_raw: {normalized.occupation_from_income_raw}")
-    typer.echo(f"  occupation_summary_raw: {normalized.occupation_summary_raw}")
-    typer.echo(f"  occupation_chat_raw: {normalized.occupation_chat_raw}")
-    typer.echo(f"  occupation_text: {normalized.occupation_text}")
-
-    typer.echo("")
-    typer.echo(f"Education events: {len(normalized.education_events)}")
-    for event_text in normalized.education_events[:10]:
-        typer.echo(f"  - {event_text}")
+    _render_normalized_participant(normalized)
 
 
 @app.command("collect-study-default-and-normalize-participant")
@@ -797,36 +1006,7 @@ def collect_study_default_and_normalize_participant(
         normalized = normalization.normalize_participant(collected)
         progress.stop()
 
-    typer.echo("")
-    typer.echo("Normalized participant")
-    typer.echo(f"Village: {normalized.village_name}")
-    typer.echo(f"Village ID: {normalized.village_id}")
-    typer.echo(f"Island ID: {normalized.island_id}")
-    typer.echo(f"Name: {normalized.islander_name}")
-    typer.echo(f"Islander ID: {normalized.islander_id}")
-
-    typer.echo("")
-    typer.echo("Normalized fields")
-    typer.echo(f"  age: {normalized.age}")
-    typer.echo(f"  current_residence_raw: {normalized.current_residence_raw}")
-    typer.echo(f"  current_village: {normalized.current_village}")
-    typer.echo(f"  current_house_number: {normalized.current_house_number}")
-    typer.echo(f"  money_summary_raw: {normalized.money_summary_raw}")
-    typer.echo(f"  money_summary_value: {normalized.money_summary_value}")
-    typer.echo(f"  birth_village_raw: {normalized.birth_village_raw}")
-    typer.echo(f"  birth_village: {normalized.birth_village}")
-    typer.echo(f"  income_response_raw: {normalized.income_response_raw}")
-    typer.echo(f"  income_numeric: {normalized.income_numeric}")
-    typer.echo(f"  income_text_normalized: {normalized.income_text_normalized}")
-    typer.echo(f"  occupation_from_income_raw: {normalized.occupation_from_income_raw}")
-    typer.echo(f"  occupation_summary_raw: {normalized.occupation_summary_raw}")
-    typer.echo(f"  occupation_chat_raw: {normalized.occupation_chat_raw}")
-    typer.echo(f"  occupation_text: {normalized.occupation_text}")
-
-    typer.echo("")
-    typer.echo(f"Education events: {len(normalized.education_events)}")
-    for event_text in normalized.education_events[:10]:
-        typer.echo(f"  - {event_text}")
+    _render_normalized_participant(normalized)
 
 
 @app.command("collect-normalize-derive-participant")
@@ -873,37 +1053,7 @@ def collect_normalize_derive_participant(
         analysis_row = derivation.derive_analysis_row(normalized)
         progress.stop()
 
-    typer.echo("")
-    typer.echo("Analysis row")
-    typer.echo(f"Village: {analysis_row.village_name}")
-    typer.echo(f"Village ID: {analysis_row.village_id}")
-    typer.echo(f"Island ID: {analysis_row.island_id}")
-    typer.echo(f"Name: {analysis_row.islander_name}")
-    typer.echo(f"Islander ID: {analysis_row.islander_id}")
-
-    typer.echo("")
-    typer.echo("Derived fields")
-    typer.echo(f"  age: {analysis_row.age}")
-    typer.echo(f"  current_village: {analysis_row.current_village}")
-    typer.echo(f"  current_island_id: {analysis_row.current_island_id}")
-    typer.echo(f"  birth_village: {analysis_row.birth_village}")
-    typer.echo(f"  birth_island_id: {analysis_row.birth_island_id}")
-    typer.echo(f"  immigrant_other_island: {analysis_row.immigrant_other_island}")
-
-    typer.echo("")
-    typer.echo("Carry-through fields")
-    typer.echo(f"  current_residence_raw: {analysis_row.current_residence_raw}")
-    typer.echo(f"  money_summary_raw: {analysis_row.money_summary_raw}")
-    typer.echo(f"  money_summary_value: {analysis_row.money_summary_value}")
-    typer.echo(f"  income_response_raw: {analysis_row.income_response_raw}")
-    typer.echo(f"  income_numeric: {analysis_row.income_numeric}")
-    typer.echo(f"  income_text_normalized: {analysis_row.income_text_normalized}")
-    typer.echo(f"  occupation_text: {analysis_row.occupation_text}")
-
-    typer.echo("")
-    typer.echo("Education")
-    typer.echo(f"  latest_education_event: {analysis_row.latest_education_event}")
-    typer.echo(f"  education_label: {analysis_row.education_label}")
+    _render_analysis_row(analysis_row)
 
 
 @app.command("collect-study-default-and-derive-participant")
@@ -938,37 +1088,7 @@ def collect_study_default_and_derive_participant(
         analysis_row = derivation.derive_analysis_row(normalized)
         progress.stop()
 
-    typer.echo("")
-    typer.echo("Analysis row")
-    typer.echo(f"Village: {analysis_row.village_name}")
-    typer.echo(f"Village ID: {analysis_row.village_id}")
-    typer.echo(f"Island ID: {analysis_row.island_id}")
-    typer.echo(f"Name: {analysis_row.islander_name}")
-    typer.echo(f"Islander ID: {analysis_row.islander_id}")
-
-    typer.echo("")
-    typer.echo("Derived fields")
-    typer.echo(f"  age: {analysis_row.age}")
-    typer.echo(f"  current_village: {analysis_row.current_village}")
-    typer.echo(f"  current_island_id: {analysis_row.current_island_id}")
-    typer.echo(f"  birth_village: {analysis_row.birth_village}")
-    typer.echo(f"  birth_island_id: {analysis_row.birth_island_id}")
-    typer.echo(f"  immigrant_other_island: {analysis_row.immigrant_other_island}")
-
-    typer.echo("")
-    typer.echo("Carry-through fields")
-    typer.echo(f"  current_residence_raw: {analysis_row.current_residence_raw}")
-    typer.echo(f"  money_summary_raw: {analysis_row.money_summary_raw}")
-    typer.echo(f"  money_summary_value: {analysis_row.money_summary_value}")
-    typer.echo(f"  income_response_raw: {analysis_row.income_response_raw}")
-    typer.echo(f"  income_numeric: {analysis_row.income_numeric}")
-    typer.echo(f"  income_text_normalized: {analysis_row.income_text_normalized}")
-    typer.echo(f"  occupation_text: {analysis_row.occupation_text}")
-
-    typer.echo("")
-    typer.echo("Education")
-    typer.echo(f"  latest_education_event: {analysis_row.latest_education_event}")
-    typer.echo(f"  education_label: {analysis_row.education_label}")
+    _render_analysis_row(analysis_row)
 
 
 # save commands
@@ -1036,10 +1156,7 @@ def collect_normalize_derive_and_save_participant(
         persistence.write_analysis_rows_csv([analysis_row])
         progress.stop()
 
-    typer.echo(f"Saved outputs to: {persistence.output_dir}")
-    typer.echo("Saved participant collection result to raw/participant_collection.jsonl")
-    typer.echo("Saved normalized participant to normalized/participants.jsonl")
-    typer.echo("Saved analysis row to analysis/analysis_rows.jsonl and analysis/analysis_rows.csv")
+    _render_participant_save_summary(persistence.output_dir)
 
 
 @app.command("collect-study-default-and-save-participant")
@@ -1094,10 +1211,7 @@ def collect_study_default_and_save_participant(
         persistence.write_analysis_rows_csv([analysis_row])
         progress.stop()
 
-    typer.echo(f"Saved outputs to: {persistence.output_dir}")
-    typer.echo("Saved participant collection result to raw/participant_collection.jsonl")
-    typer.echo("Saved normalized participant to normalized/participants.jsonl")
-    typer.echo("Saved analysis row to analysis/analysis_rows.jsonl and analysis/analysis_rows.csv")
+    _render_participant_save_summary(persistence.output_dir)
 
 
 @app.command("collect-village-data")
@@ -1160,29 +1274,7 @@ def collect_village_data(
         )
         progress.stop()
 
-    typer.echo("")
-    typer.echo("Summary")
-    typer.echo(f"Village: {result.village_name}")
-    typer.echo(f"Completed collected participants: {len(result.collected_participant_results)}")
-    typer.echo(f"Processed households: {len(result.processed_households)}")
-    typer.echo(f"Reserve exhausted: {result.exhausted_reserve}")
-
-    typer.echo("")
-    typer.echo("Collected participants")
-    for idx, participant in enumerate(result.collected_participant_results, start=1):
-        typer.echo(
-            f"{idx}. {participant.islander_name} | islander_id={participant.islander_id}"
-        )
-
-        if participant.summary_data:
-            typer.echo("   Summary:")
-            for key, value in participant.summary_data.items():
-                typer.echo(f"     {key}: {value}")
-
-        if participant.chat_data:
-            typer.echo("   Chat:")
-            for key, response in participant.chat_data.items():
-                typer.echo(f"     {key}: {response.response_text}")
+    _render_village_collection_summary(result, include_collected_payloads=True)
 
 
 @app.command("collect-study-default-village")
@@ -1236,29 +1328,7 @@ def collect_study_default_village(
         )
         progress.stop()
 
-    typer.echo("")
-    typer.echo("Summary")
-    typer.echo(f"Village: {result.village_name}")
-    typer.echo(f"Completed collected participants: {len(result.collected_participant_results)}")
-    typer.echo(f"Processed households: {len(result.processed_households)}")
-    typer.echo(f"Reserve exhausted: {result.exhausted_reserve}")
-
-    typer.echo("")
-    typer.echo("Collected participants")
-    for idx, participant in enumerate(result.collected_participant_results, start=1):
-        typer.echo(
-            f"{idx}. {participant.islander_name} | islander_id={participant.islander_id}"
-        )
-
-        if participant.summary_data:
-            typer.echo("   Summary:")
-            for key, value in participant.summary_data.items():
-                typer.echo(f"     {key}: {value}")
-
-        if participant.chat_data:
-            typer.echo("   Chat:")
-            for key, response in participant.chat_data.items():
-                typer.echo(f"     {key}: {response.response_text}")
+    _render_village_collection_summary(result, include_collected_payloads=True)
 
 
 @app.command("collect-village-data-and-save")
@@ -1396,12 +1466,7 @@ def collect_village_data_and_save(
         persistence.write_analysis_rows_csv(analysis_rows)
         progress.stop()
 
-    typer.echo(f"Saved outputs to: {persistence.output_dir}")
-    typer.echo("Saved sampling run metadata.")
-    typer.echo("Saved processed household audit records.")
-    typer.echo("Saved participant collection records.")
-    typer.echo("Saved normalized participant records.")
-    typer.echo("Saved analysis rows to JSONL and CSV.")
+    _render_village_save_summary(persistence.output_dir)
 
 
 @app.command("collect-study-default-village-and-save")
@@ -1526,12 +1591,7 @@ def collect_study_default_village_and_save(
         persistence.write_analysis_rows_csv(analysis_rows)
         progress.stop()
 
-    typer.echo(f"Saved outputs to: {persistence.output_dir}")
-    typer.echo("Saved sampling run metadata.")
-    typer.echo("Saved processed household audit records.")
-    typer.echo("Saved participant collection records.")
-    typer.echo("Saved normalized participant records.")
-    typer.echo("Saved analysis rows to JSONL and CSV.")
+    _render_village_save_summary(persistence.output_dir)
 
 
 @app.command("collect-study-data-and-save")
@@ -1619,9 +1679,7 @@ def collect_study_data_and_save(
         )
         progress.stop()
 
-    typer.echo(f"Saved study outputs to: {persistence.output_dir}")
-    typer.echo(f"Villages processed: {len(village_name)}")
-    typer.echo(f"Total analysis rows: {len(all_analysis_rows)}")
+    _render_study_save_summary(persistence.output_dir, len(village_name), len(all_analysis_rows))
 
 
 @app.command("collect-study-default-data-and-save")
@@ -1654,10 +1712,7 @@ def collect_study_default_data_and_save(
         raise typer.BadParameter("At least one --village-name must be provided.")
 
     collection_plan = _build_study_default_collection_plan(include_timeline=include_timeline)
-    question_specs = [
-        "birth_village=Which village were you born in?",
-        "income=What is your income?",
-    ]
+    question_specs = list(STUDY_DEFAULT_QUESTION_SPECS)
 
     sampling_plan = SamplingPlan(
         households_per_village=n,
@@ -1706,9 +1761,7 @@ def collect_study_default_data_and_save(
         )
         progress.stop()
 
-    typer.echo(f"Saved study outputs to: {persistence.output_dir}")
-    typer.echo(f"Villages processed: {len(village_name)}")
-    typer.echo(f"Total analysis rows: {len(all_analysis_rows)}")
+    _render_study_save_summary(persistence.output_dir, len(village_name), len(all_analysis_rows))
 
 
 @app.command("resume-study-run")
@@ -1756,8 +1809,7 @@ def resume_study_run(
         )
         progress.stop()
 
-    typer.echo(f"Resumed study outputs in: {persistence.output_dir}")
-    typer.echo(f"Total new analysis rows written in this resume pass: {len(all_analysis_rows)}")
+    _render_resume_summary(persistence.output_dir, len(all_analysis_rows))
 
 
 if __name__ == "__main__":
