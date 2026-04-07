@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-import typer
+import typer, uuid
+from datetime import datetime
+from pathlib import Path
+from uuid import uuid4
 
 from scraper import config
 from scraper.auth_env import clear_auth_cookie, get_auth_cookie, set_auth_cookie
@@ -27,6 +30,9 @@ from scraper.services.derivation import DerivationService
 from scraper.services.normalization import NormalizationService
 from scraper.study_profile import VILLAGE_TO_ISLAND
 
+from scraper.models.analysis import ProcessedHouseholdRecord, SamplingRunRecord, StudyRunRecord, VillageRunSummary
+from scraper.services.persistence import PersistenceService
+
 app = typer.Typer(help="Islands webscraper CLI")
 
 
@@ -40,6 +46,491 @@ def main() -> None:
 def hello() -> None:
     # quick sanity check that the CLI is wired up
     print("islands-webscraper is set up")
+
+
+@app.command("collect-study-data-and-save")
+def collect_study_data_and_save(
+    village_name: list[str] = typer.Option(
+        ...,
+        help="Village name to include. Repeat this option for multiple villages.",
+    ),
+    n: int = typer.Option(..., help="Target completed participants per village"),
+    reserve_n: int = typer.Option(20, help="Number of reserve households to pre-generate per village"),
+    seed: int = typer.Option(401, help="Seed for reproducible random sampling"),
+    min_age: int = typer.Option(21, help="Minimum age for adult eligibility"),
+    summary_field: list[str] = typer.Option(
+        [],
+        help="Summary field source name to collect. Repeat this option for multiple fields.",
+    ),
+    question: list[str] = typer.Option(
+        [],
+        help='Chat question spec in the form key="Question text". Repeat for multiple questions.',
+    ),
+    include_timeline: bool = typer.Option(True, help="Include raw timeline events"),
+    progress_level: int = typer.Option(1, help="Progress detail level: 0, 1, or 2"),
+    run_id: str | None = typer.Option(
+        None,
+        help="Optional study run id. If omitted, a new study run directory is created.",
+    ),
+) -> None:
+    ensure_auth_or_exit()
+
+    if not village_name:
+        raise typer.BadParameter("At least one --village-name must be provided.")
+
+    summary_specs = [
+        SummaryFieldSpec(key=field_name, source=field_name, required=False)
+        for field_name in summary_field
+    ]
+
+    chat_specs: list[ChatQuestionSpec] = []
+    for raw_question in question:
+        if "=" not in raw_question:
+            raise typer.BadParameter(
+                f"Question spec must look like key=Question text, got: {raw_question!r}"
+            )
+
+        key, question_text = raw_question.split("=", 1)
+        key = key.strip()
+        question_text = question_text.strip()
+
+        if not key or not question_text:
+            raise typer.BadParameter(
+                f"Question spec must include both key and question text, got: {raw_question!r}"
+            )
+
+        chat_specs.append(
+            ChatQuestionSpec(
+                key=key,
+                question_text=question_text,
+                required=False,
+            )
+        )
+
+    collection_plan = CollectionPlan(
+        include_summary=True,
+        include_timeline=include_timeline,
+        summary_fields=summary_specs,
+        chat_questions=chat_specs,
+    )
+
+    sampling_plan = SamplingPlan(
+        households_per_village=n,
+        reserve_households_per_village=reserve_n,
+        adults_only_min_age=min_age,
+        seed=seed,
+    )
+
+    resolved_study_run_id = run_id or _build_study_run_id(
+        village_names=village_name,
+        n=n,
+        seed=seed,
+    )
+
+    with IslandsSession.from_config() as session:
+        collector = Collector(session)
+        sampling = SamplingService(collector)
+        progress = ConsoleProgressReporter(max_level=progress_level)
+        data_collection = DataCollectionService(
+            collector=collector,
+            progress=progress,
+        )
+        workflow = CollectionWorkflow(
+            collector=collector,
+            sampling=sampling,
+            data_collection=data_collection,
+            progress=progress,
+        )
+        normalization = NormalizationService()
+        derivation = DerivationService(VILLAGE_TO_ISLAND)
+
+        study_persistence = PersistenceService(
+            data_dir=config.settings.data_dir,
+            run_id=resolved_study_run_id,
+            save_debug_payloads=config.settings.save_debug_payloads,
+        )
+
+        all_analysis_rows = []
+        village_summaries: list[VillageRunSummary] = []
+
+        # saves study-level metadata
+        study_persistence.append_jsonl_record(
+            study_persistence.raw_dir / "study_run.jsonl",
+            StudyRunRecord(
+                run_id=study_persistence.run_id,
+                village_names=village_name,
+                n_per_village=n,
+                reserve_n_per_village=reserve_n,
+                seed=seed,
+                summary_fields=summary_field,
+                question_keys=[spec.key for spec in chat_specs],
+            ),
+        )
+
+        for village_label in village_name:
+            progress.emit(0, f"=== Study village start: {village_label} ===")
+
+            village = collector.fetch_village(village_label)
+            result = workflow.collect_village(
+                village=village,
+                sampling_plan=sampling_plan,
+                collection_plan=collection_plan,
+            )
+
+            # per-village subdirectory inside the study run
+            village_run_id = f"village-{_slugify(village_label)}"
+            village_persistence = PersistenceService(
+                data_dir=config.settings.data_dir,
+                run_id=village_run_id,
+                save_debug_payloads=config.settings.save_debug_payloads,
+                base_dir=study_persistence.output_dir / "villages",
+            )
+
+            village_persistence.persist_sampling_run(
+                SamplingRunRecord(
+                    run_id=study_persistence.run_id,
+                    village_name=result.village_name,
+                    village_id=result.village_id,
+                    island_id=result.island_id,
+                    frame_size=result.frame_size,
+                    target_completed_participants=result.target_completed_participants,
+                    seed=seed,
+                    primary_household_ids=result.primary_household_ids,
+                    reserve_household_ids=result.reserve_household_ids,
+                )
+            )
+
+            for sampled in result.processed_households:
+                village_persistence.persist_processed_household(
+                    ProcessedHouseholdRecord(
+                        run_id=study_persistence.run_id,
+                        village_name=result.village_name,
+                        village_id=result.village_id,
+                        island_id=result.island_id,
+                        house_id=sampled.house_id,
+                        display_house_number=sampled.display_house_number,
+                        resident_count=len(sampled.residents),
+                        eligible_adult_count=len(sampled.eligible_adults),
+                        selected_adult_id=(
+                            sampled.selected_adult.islander_id if sampled.selected_adult else None
+                        ),
+                        selected_adult_name=(
+                            sampled.selected_adult.name if sampled.selected_adult else None
+                        ),
+                        selected_adult_age=(
+                            sampled.selected_adult.age if sampled.selected_adult else None
+                        ),
+                        status=sampled.status,
+                        replacement_reason=sampled.replacement_reason,
+                        consent_outcome=sampled.consent_outcome,
+                        consent_timestamp_text=sampled.consent_timestamp_text,
+                        consent_message=sampled.consent_message,
+                    )
+                )
+
+            village_analysis_rows = []
+            for participant_result in result.collected_participant_results:
+                village_persistence.persist_participant_collection(participant_result)
+
+                normalized = normalization.normalize_participant(participant_result)
+                village_persistence.persist_normalized_participant(normalized)
+
+                analysis_row = derivation.derive_analysis_row(normalized)
+                village_persistence.append_analysis_row_jsonl(analysis_row)
+                village_analysis_rows.append(analysis_row)
+                all_analysis_rows.append(analysis_row)
+
+            village_persistence.write_analysis_rows_csv(village_analysis_rows)
+
+            village_summary = VillageRunSummary(
+                run_id=study_persistence.run_id,
+                village_name=result.village_name,
+                village_id=result.village_id,
+                island_id=result.island_id,
+                target_completed_participants=result.target_completed_participants,
+                completed_collected_participants=len(result.collected_participant_results),
+                processed_households=len(result.processed_households),
+                exhausted_reserve=result.exhausted_reserve,
+            )
+            village_summaries.append(village_summary)
+
+            study_persistence.append_jsonl_record(
+                study_persistence.raw_dir / "village_summaries.jsonl",
+                village_summary,
+            )
+
+            progress.emit(0, f"=== Study village end: {village_label} ===")
+
+        # writes aggregated study-level analysis outputs
+        for row in all_analysis_rows:
+            study_persistence.append_analysis_row_jsonl(row)
+        study_persistence.write_analysis_rows_csv(all_analysis_rows)
+
+    typer.echo(f"Saved study outputs to: {study_persistence.output_dir}")
+    typer.echo(f"Villages processed: {len(village_name)}")
+    typer.echo(f"Total analysis rows: {len(all_analysis_rows)}")
+
+
+@app.command("collect-village-data-and-save")
+def collect_village_data_and_save(
+    village_name: str = typer.Option(..., help="Village name, e.g. Vardo"),
+    n: int = typer.Option(..., help="Target completed participants"),
+    reserve_n: int = typer.Option(20, help="Number of reserve households to pre-generate"),
+    seed: int = typer.Option(401, help="Seed for reproducible random sampling"),
+    min_age: int = typer.Option(21, help="Minimum age for adult eligibility"),
+    summary_field: list[str] = typer.Option(
+        [],
+        help="Summary field source name to collect. Repeat this option for multiple fields.",
+    ),
+    question: list[str] = typer.Option(
+        [],
+        help='Chat question spec in the form key="Question text". Repeat for multiple questions.',
+    ),
+    include_timeline: bool = typer.Option(True, help="Include raw timeline events"),
+    progress_level: int = typer.Option(1, help="Progress detail level: 0, 1, or 2"),
+    run_id: str | None = typer.Option(
+        None,
+        help="Optional run id. If omitted, a new run directory is created.",
+    ),
+) -> None:
+    ensure_auth_or_exit()
+
+    summary_specs = [
+        SummaryFieldSpec(key=field_name, source=field_name, required=False)
+        for field_name in summary_field
+    ]
+
+    chat_specs: list[ChatQuestionSpec] = []
+    for raw_question in question:
+        if "=" not in raw_question:
+            raise typer.BadParameter(
+                f"Question spec must look like key=Question text, got: {raw_question!r}"
+            )
+
+        key, question_text = raw_question.split("=", 1)
+        key = key.strip()
+        question_text = question_text.strip()
+
+        if not key or not question_text:
+            raise typer.BadParameter(
+                f"Question spec must include both key and question text, got: {raw_question!r}"
+            )
+
+        chat_specs.append(
+            ChatQuestionSpec(
+                key=key,
+                question_text=question_text,
+                required=False,
+            )
+        )
+
+    collection_plan = CollectionPlan(
+        include_summary=True,
+        include_timeline=include_timeline,
+        summary_fields=summary_specs,
+        chat_questions=chat_specs,
+    )
+
+    sampling_plan = SamplingPlan(
+        households_per_village=n,
+        reserve_households_per_village=reserve_n,
+        adults_only_min_age=min_age,
+        seed=seed,
+    )
+
+    with IslandsSession.from_config() as session:
+        collector = Collector(session)
+        sampling = SamplingService(collector)
+        progress = ConsoleProgressReporter(max_level=progress_level)
+        data_collection = DataCollectionService(
+            collector=collector,
+            progress=progress,
+        )
+        workflow = CollectionWorkflow(
+            collector=collector,
+            sampling=sampling,
+            data_collection=data_collection,
+            progress=progress,
+        )
+        normalization = NormalizationService()
+        derivation = DerivationService(VILLAGE_TO_ISLAND)
+        resolved_run_id = run_id or _build_village_run_id(
+            village_name=village_name,
+            n=n,
+            seed=seed,
+        )
+
+        persistence = PersistenceService(
+            data_dir=config.settings.data_dir,
+            run_id=resolved_run_id,
+            save_debug_payloads=config.settings.save_debug_payloads,
+        )
+
+        village = collector.fetch_village(village_name)
+        result = workflow.collect_village(
+            village=village,
+            sampling_plan=sampling_plan,
+            collection_plan=collection_plan,
+        )
+
+        persistence.persist_sampling_run(
+            SamplingRunRecord(
+                run_id=persistence.run_id,
+                village_name=result.village_name,
+                village_id=result.village_id,
+                island_id=result.island_id,
+                frame_size=result.frame_size,
+                target_completed_participants=result.target_completed_participants,
+                seed=seed,
+                primary_household_ids=result.primary_household_ids,
+                reserve_household_ids=result.reserve_household_ids,
+            )
+        )
+
+        for sampled in result.processed_households:
+            persistence.persist_processed_household(
+                ProcessedHouseholdRecord(
+                    run_id=persistence.run_id,
+                    village_name=result.village_name,
+                    village_id=result.village_id,
+                    island_id=result.island_id,
+                    house_id=sampled.house_id,
+                    display_house_number=sampled.display_house_number,
+                    resident_count=len(sampled.residents),
+                    eligible_adult_count=len(sampled.eligible_adults),
+                    selected_adult_id=(
+                        sampled.selected_adult.islander_id if sampled.selected_adult else None
+                    ),
+                    selected_adult_name=(
+                        sampled.selected_adult.name if sampled.selected_adult else None
+                    ),
+                    selected_adult_age=(
+                        sampled.selected_adult.age if sampled.selected_adult else None
+                    ),
+                    status=sampled.status,
+                    replacement_reason=sampled.replacement_reason,
+                    consent_outcome=sampled.consent_outcome,
+                    consent_timestamp_text=sampled.consent_timestamp_text,
+                    consent_message=sampled.consent_message,
+                )
+            )
+
+        analysis_rows = []
+        for participant_result in result.collected_participant_results:
+            persistence.persist_participant_collection(participant_result)
+
+            normalized = normalization.normalize_participant(participant_result)
+            persistence.persist_normalized_participant(normalized)
+
+            analysis_row = derivation.derive_analysis_row(normalized)
+            persistence.append_analysis_row_jsonl(analysis_row)
+            analysis_rows.append(analysis_row)
+
+        persistence.write_analysis_rows_csv(analysis_rows)
+
+    typer.echo(f"Saved outputs to: {persistence.output_dir}")
+    typer.echo("Saved sampling run metadata.")
+    typer.echo("Saved processed household audit records.")
+    typer.echo("Saved participant collection records.")
+    typer.echo("Saved normalized participant records.")
+    typer.echo("Saved analysis rows to JSONL and CSV.")
+
+
+@app.command("collect-normalize-derive-and-save-participant")
+def collect_normalize_derive_and_save_participant(
+    village_name: str = typer.Option(..., help="Village name where the islander was found"),
+    islander_id: str = typer.Option(..., help="Islander id"),
+    summary_field: list[str] = typer.Option(
+        [],
+        help="Summary field source name to collect. Repeat this option for multiple fields.",
+    ),
+    question: list[str] = typer.Option(
+        [],
+        help='Chat question spec in the form key="Question text". Repeat for multiple questions.',
+    ),
+    include_timeline: bool = typer.Option(True, help="Include raw timeline events"),
+    progress_level: int = typer.Option(1, help="Progress detail level: 0, 1, or 2"),
+    run_id: str | None = typer.Option(
+        None,
+        help="Optional run id. If omitted, a new run directory is created.",
+    ),
+) -> None:
+    ensure_auth_or_exit()
+
+    summary_specs = [
+        SummaryFieldSpec(key=field_name, source=field_name, required=False)
+        for field_name in summary_field
+    ]
+
+    chat_specs: list[ChatQuestionSpec] = []
+    for raw_question in question:
+        if "=" not in raw_question:
+            raise typer.BadParameter(
+                f"Question spec must look like key=Question text, got: {raw_question!r}"
+            )
+
+        key, question_text = raw_question.split("=", 1)
+        key = key.strip()
+        question_text = question_text.strip()
+
+        if not key or not question_text:
+            raise typer.BadParameter(
+                f"Question spec must include both key and question text, got: {raw_question!r}"
+            )
+
+        chat_specs.append(
+            ChatQuestionSpec(
+                key=key,
+                question_text=question_text,
+                required=False,
+            )
+        )
+
+    plan = CollectionPlan(
+        include_summary=True,
+        include_timeline=include_timeline,
+        summary_fields=summary_specs,
+        chat_questions=chat_specs,
+    )
+
+    with IslandsSession.from_config() as session:
+        collector = Collector(session)
+        progress = ConsoleProgressReporter(max_level=progress_level)
+        data_collection = DataCollectionService(
+            collector=collector,
+            progress=progress,
+        )
+        normalization = NormalizationService()
+        derivation = DerivationService(VILLAGE_TO_ISLAND)
+        resolved_run_id = run_id or _build_participant_run_id(
+            village_name=village_name,
+            islander_id=islander_id,
+        )
+
+        persistence = PersistenceService(
+            data_dir=config.settings.data_dir,
+            run_id=resolved_run_id,
+            save_debug_payloads=config.settings.save_debug_payloads,
+        )
+
+        village = collector.fetch_village(village_name)
+        collected = data_collection.collect_participant(
+            village=village,
+            islander_id=islander_id,
+            plan=plan,
+        )
+        normalized = normalization.normalize_participant(collected)
+        analysis_row = derivation.derive_analysis_row(normalized)
+
+        persistence.persist_participant_collection(collected)
+        persistence.persist_normalized_participant(normalized)
+        persistence.append_analysis_row_jsonl(analysis_row)
+        persistence.write_analysis_rows_csv([analysis_row])
+
+    typer.echo(f"Saved outputs to: {persistence.output_dir}")
+    typer.echo("Saved participant collection result to raw/participant_collection.jsonl")
+    typer.echo("Saved normalized participant to normalized/participants.jsonl")
+    typer.echo("Saved analysis row to analysis/analysis_rows.jsonl and analysis/analysis_rows.csv")
 
 
 @app.command("collect-normalize-derive-participant")
@@ -142,9 +633,9 @@ def collect_normalize_derive_participant(
     typer.echo(f"  occupation_text: {analysis_row.occupation_text}")
 
     typer.echo("")
-    typer.echo(f"Education events: {len(analysis_row.education_events)}")
-    for event_text in analysis_row.education_events[:10]:
-        typer.echo(f"  - {event_text}")
+    typer.echo("Education")
+    typer.echo(f"  latest_education_event: {analysis_row.latest_education_event}")
+    typer.echo(f"  education_label: {analysis_row.education_label}")
 
 
 @app.command("collect-and-normalize-participant")
@@ -827,6 +1318,40 @@ def ensure_auth_or_exit() -> None:
     except RuntimeError as exc:
         typer.echo(str(exc))
         raise typer.Exit(code=1)
+    
+
+from datetime import datetime
+from uuid import uuid4
+
+
+def _slugify(value: str) -> str:
+    # simple file-safe label for run ids
+    return "".join(ch if ch.isalnum() or ch in ("-", "_") else "-" for ch in value.strip())
+
+
+def _timestamp_for_run_id() -> str:
+    return datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+
+
+def _build_village_run_id(village_name: str, n: int, seed: int) -> str:
+    ts = _timestamp_for_run_id()
+    suffix = uuid4().hex[:8]
+    return f"{ts}_village-{_slugify(village_name)}_n-{n}_seed-{seed}_{suffix}"
+
+
+def _build_participant_run_id(village_name: str, islander_id: str) -> str:
+    ts = _timestamp_for_run_id()
+    suffix = uuid4().hex[:8]
+    return f"{ts}_participant-{_slugify(islander_id)}_village-{_slugify(village_name)}_{suffix}"
+
+
+def _build_study_run_id(village_names: list[str], n: int, seed: int) -> str:
+    ts = _timestamp_for_run_id()
+    suffix = uuid4().hex[:8]
+    villages_part = "-".join(_slugify(name) for name in village_names[:3])
+    if len(village_names) > 3:
+        villages_part += f"-plus{len(village_names) - 3}"
+    return f"{ts}_study_{villages_part}_n-{n}_seed-{seed}_{suffix}"
 
 if __name__ == "__main__":
     app()
