@@ -16,7 +16,8 @@ This project provides a typed client, HTML/text parsers, and reproducible collec
 ## Project Status
 
 This is an unofficial utility built around observed site behavior and page JavaScript. It is not an official API client.
-Currently, the application is still in development and a functioning release is not available.
+
+Currently in development — a functioning release is not yet available.
 
 ## Installation
 
@@ -89,11 +90,11 @@ print(reply.response_text)
 
 This repo stores data in three layers:
 
-| Layer          | Description                                                                                |
-| -------------- | ------------------------------------------------------------------------------------------ |
-| **Raw**        | Original HTML/text payloads from the simulator                                             |
+| Layer | Description |
+|---|---|
+| **Raw** | Original HTML/text payloads from the simulator |
 | **Normalized** | Parsed structured facts such as birth village, current village, income, education evidence |
-| **Analysis**   | Minimal final variables used in statistical analysis                                       |
+| **Analysis** | Minimal final variables used in statistical analysis |
 
 ## CLI Commands
 
@@ -128,6 +129,17 @@ data/
 ├── normalized/
 └── analysis/
 ```
+
+## Documentation
+
+Full documentation lives in [`docs/`](docs/).
+
+| Doc | Description |
+|---|---|
+| [`docs/api.md`](docs/api.md) | HTTP endpoint model, Python client API, and all service and sampling methods |
+| [`docs/architecture.md`](docs/architecture.md) | Repository structure, layer responsibilities, and design principles |
+| [`docs/data-model.md`](docs/data-model.md) | All Pydantic models across the raw, normalized, and analysis stages |
+| [`docs/workflows.md`](docs/workflows.md) | End-to-end collection and dataset build workflows with CLI and Python examples |
 
 ## Rate Limiting
 
