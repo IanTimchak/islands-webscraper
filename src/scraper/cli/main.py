@@ -11,6 +11,7 @@ from scraper.auth_browser import (
 )
 from scraper.client.session import IslandsSession
 from scraper.services.auth import require_auth_present_and_fresh, validate_current_auth
+from scraper.services.collection import Collector
 
 app = typer.Typer(help="Islands webscraper CLI")
 
@@ -32,12 +33,14 @@ def fetch_village(village_name: str) -> None:
     # cheap local guard only
     ensure_auth_or_exit()
 
-    # makes the real request
     with IslandsSession.from_config() as session:
-        html = session.get_village_html(village_name)
+        collector = Collector(session)
+        village = collector.fetch_village(village_name)
 
-    # simple smoke-test output for now
-    print(f"Fetched {len(html)} characters from village page: {village_name}")
+    typer.echo(f"Village: {village.village_name}")
+    typer.echo(f"Village ID: {village.village_id}")
+    typer.echo(f"Island ID: {village.island_id}")
+    typer.echo(f"Households found: {len(village.house_ids)}")
 
 
 @app.command("auth-login")
