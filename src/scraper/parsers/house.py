@@ -10,7 +10,11 @@ from scraper.models.pages import HouseholdPage, Resident
 _HOUSE_TITLE_RE = re.compile(r"House\s+(\d+)")
 
 
-def parse_household_page(html: str, village_id: int) -> HouseholdPage:
+def parse_household_page(
+    html: str,
+    village_id: int,
+    requested_house_id: int,
+) -> HouseholdPage:
     """Parse a house.php response into a structured household page."""
     soup = BeautifulSoup(html, "html.parser")
 
@@ -20,10 +24,10 @@ def parse_household_page(html: str, village_id: int) -> HouseholdPage:
 
     title_text = house_title.get_text(strip=True)
     title_match = _HOUSE_TITLE_RE.search(title_text)
-    if not title_match:
-        raise ValueError(f"Could not parse house id from title: {title_text!r}")
 
-    house_id = int(title_match.group(1))
+    display_house_number: int | None = None
+    if title_match:
+        display_house_number = int(title_match.group(1))
 
     residents_table = soup.find("table", class_="residents")
     if residents_table is None:
@@ -68,7 +72,8 @@ def parse_household_page(html: str, village_id: int) -> HouseholdPage:
 
     return HouseholdPage(
         village_id=village_id,
-        house_id=house_id,
+        house_id=requested_house_id,
+        display_house_number=display_house_number,
         residents=residents,
         raw_html=html,
     )

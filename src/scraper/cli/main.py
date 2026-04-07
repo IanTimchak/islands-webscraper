@@ -10,8 +10,18 @@ from scraper.auth_browser import (
     open_login_page,
 )
 from scraper.client.session import IslandsSession
+from scraper.models.normalized import (
+    ChatQuestionSpec,
+    CollectionPlan,
+    SamplingPlan,
+    SummaryFieldSpec,
+)
 from scraper.services.auth import require_auth_present_and_fresh, validate_current_auth
 from scraper.services.collection import Collector
+from scraper.services.data_collection import DataCollectionService
+from scraper.services.progress import ConsoleProgressReporter
+from scraper.services.sampling import SamplingService
+from scraper.services.workflow import CollectionWorkflow
 
 app = typer.Typer(help="Islands webscraper CLI")
 
@@ -26,6 +36,330 @@ def main() -> None:
 def hello() -> None:
     # quick sanity check that the CLI is wired up
     print("islands-webscraper is set up")
+
+
+@app.command("collect-village-data")
+def collect_village_data(
+    village_name: str = typer.Option(..., help="Village name, e.g. Vardo"),
+    n: int = typer.Option(..., help="Target completed participants"),
+    reserve_n: int = typer.Option(20, help="Number of reserve households to pre-generate"),
+    seed: int = typer.Option(401, help="Seed for reproducible random sampling"),
+    min_age: int = typer.Option(21, help="Minimum age for adult eligibility"),
+    summary_field: list[str] = typer.Option(
+        [],
+        help="Summary field source name to collect. Repeat this option for multiple fields.",
+    ),
+    question: list[str] = typer.Option(
+        [],
+        help='Chat question spec in the form key="Question text". Repeat for multiple questions.',
+    ),
+    include_timeline: bool = typer.Option(True, help="Include raw timeline events"),
+    progress_level: int = typer.Option(1, help="Progress detail level: 0, 1, or 2"),
+) -> None:
+    ensure_auth_or_exit()
+
+    summary_specs = [
+        SummaryFieldSpec(key=field_name, source=field_name, required=False)
+        for field_name in summary_field
+    ]
+
+    chat_specs: list[ChatQuestionSpec] = []
+    for raw_question in question:
+        if "=" not in raw_question:
+            raise typer.BadParameter(
+                f"Question spec must look like key=Question text, got: {raw_question!r}"
+            )
+
+        key, question_text = raw_question.split("=", 1)
+        key = key.strip()
+        question_text = question_text.strip()
+
+        if not key or not question_text:
+            raise typer.BadParameter(
+                f"Question spec must include both key and question text, got: {raw_question!r}"
+            )
+
+        chat_specs.append(
+            ChatQuestionSpec(
+                key=key,
+                question_text=question_text,
+                required=False,
+            )
+        )
+
+    collection_plan = CollectionPlan(
+        include_summary=True,
+        include_timeline=include_timeline,
+        summary_fields=summary_specs,
+        chat_questions=chat_specs,
+    )
+
+    sampling_plan = SamplingPlan(
+        households_per_village=n,
+        reserve_households_per_village=reserve_n,
+        adults_only_min_age=min_age,
+        seed=seed,
+    )
+
+    with IslandsSession.from_config() as session:
+        collector = Collector(session)
+        sampling = SamplingService(collector)
+        progress = ConsoleProgressReporter(max_level=progress_level)
+        data_collection = DataCollectionService(
+            collector=collector,
+            progress=progress,
+        )
+        workflow = CollectionWorkflow(
+            collector=collector,
+            sampling=sampling,
+            data_collection=data_collection,
+            progress=progress,
+        )
+
+        village = collector.fetch_village(village_name)
+        result = workflow.collect_village(
+            village=village,
+            sampling_plan=sampling_plan,
+            collection_plan=collection_plan,
+        )
+
+    typer.echo("")
+    typer.echo("Summary")
+    typer.echo(f"Village: {result.village_name}")
+    typer.echo(f"Completed collected participants: {len(result.collected_participant_results)}")
+    typer.echo(f"Processed households: {len(result.processed_households)}")
+    typer.echo(f"Reserve exhausted: {result.exhausted_reserve}")
+
+    typer.echo("")
+    typer.echo("Collected participants")
+    for idx, participant in enumerate(result.collected_participant_results, start=1):
+        typer.echo(
+            f"{idx}. {participant.islander_name} | islander_id={participant.islander_id}"
+        )
+
+        if participant.summary_data:
+            typer.echo("   Summary:")
+            for key, value in participant.summary_data.items():
+                typer.echo(f"     {key}: {value}")
+
+        if participant.chat_data:
+            typer.echo("   Chat:")
+            for key, response in participant.chat_data.items():
+                typer.echo(f"     {key}: {response.response_text}")
+
+
+@app.command("collect-participant")
+def collect_participant(
+    village_name: str = typer.Option(..., help="Village name where the islander was found"),
+    islander_id: str = typer.Option(..., help="Islander id"),
+    summary_field: list[str] = typer.Option(
+        [],
+        help="Summary field source name to collect. Repeat this option for multiple fields.",
+    ),
+    question: list[str] = typer.Option(
+        [],
+        help='Chat question spec in the form key="Question text". Repeat for multiple questions.',
+    ),
+    include_timeline: bool = typer.Option(True, help="Include raw timeline events"),
+    progress_level: int = typer.Option(1, help="Progress detail level: 0, 1, or 2"),
+) -> None:
+    ensure_auth_or_exit()
+
+    summary_specs = [
+        SummaryFieldSpec(key=field_name, source=field_name, required=False)
+        for field_name in summary_field
+    ]
+
+    chat_specs: list[ChatQuestionSpec] = []
+    for raw_question in question:
+        if "=" not in raw_question:
+            raise typer.BadParameter(
+                f"Question spec must look like key=Question text, got: {raw_question!r}"
+            )
+
+        key, question_text = raw_question.split("=", 1)
+        key = key.strip()
+        question_text = question_text.strip()
+
+        if not key or not question_text:
+            raise typer.BadParameter(
+                f"Question spec must include both key and question text, got: {raw_question!r}"
+            )
+
+        chat_specs.append(
+            ChatQuestionSpec(
+                key=key,
+                question_text=question_text,
+                required=False,
+            )
+        )
+
+    plan = CollectionPlan(
+        include_summary=True,
+        include_timeline=include_timeline,
+        summary_fields=summary_specs,
+        chat_questions=chat_specs,
+    )
+
+    with IslandsSession.from_config() as session:
+        collector = Collector(session)
+        progress = ConsoleProgressReporter(max_level=progress_level)
+        data_collection = DataCollectionService(
+            collector=collector,
+            progress=progress,
+        )
+
+        village = collector.fetch_village(village_name)
+        result = data_collection.collect_participant(
+            village=village,
+            islander_id=islander_id,
+            plan=plan,
+        )
+
+    typer.echo("")
+    typer.echo("Participant collection result")
+    typer.echo(f"Village: {result.village_name}")
+    typer.echo(f"Village ID: {result.village_id}")
+    typer.echo(f"Island ID: {result.island_id}")
+    typer.echo(f"Name: {result.islander_name}")
+    typer.echo(f"Islander ID: {result.islander_id}")
+
+    typer.echo("")
+    typer.echo("Summary data")
+    if not result.summary_data:
+        typer.echo("  <none>")
+    else:
+        for key, value in result.summary_data.items():
+            typer.echo(f"  {key}: {value}")
+
+    typer.echo("")
+    typer.echo("Chat data")
+    if not result.chat_data:
+        typer.echo("  <none>")
+    else:
+        for key, response in result.chat_data.items():
+            typer.echo(f"  {key}: {response.response_text}")
+
+    typer.echo("")
+    typer.echo(f"Timeline events: {len(result.timeline_events)}")
+
+
+@app.command("collect-village")
+def collect_village(
+    village_name: str = typer.Option(..., help="Village name, e.g. Vardo"),
+    n: int = typer.Option(..., help="Target completed participants"),
+    reserve_n: int = typer.Option(20, help="Number of reserve households to pre-generate"),
+    seed: int = typer.Option(401, help="Seed for reproducible random sampling"),
+    min_age: int = typer.Option(21, help="Minimum age for adult eligibility"),
+    progress_level: int = typer.Option(1, help="Progress detail level: 0, 1, or 2"),
+) -> None:
+    # local auth guard only
+    ensure_auth_or_exit()
+
+    with IslandsSession.from_config() as session:
+        collector = Collector(session)
+        sampling = SamplingService(collector)
+        progress = ConsoleProgressReporter(max_level=progress_level)
+        workflow = CollectionWorkflow(
+            collector=collector,
+            sampling=sampling,
+            progress=progress,
+        )
+
+        village = collector.fetch_village(village_name)
+
+        plan = SamplingPlan(
+            households_per_village=n,
+            reserve_households_per_village=reserve_n,
+            adults_only_min_age=min_age,
+            seed=seed,
+        )
+
+        result = workflow.collect_village(village=village, plan=plan)
+
+    typer.echo("")
+    typer.echo("Summary")
+    typer.echo(f"Village: {result.village_name}")
+    typer.echo(f"Village ID: {result.village_id}")
+    typer.echo(f"Island ID: {result.island_id}")
+    typer.echo(f"Frame size: {result.frame_size}")
+    typer.echo(f"Primary households: {result.primary_household_ids}")
+    typer.echo(f"Reserve households: {result.reserve_household_ids}")
+    typer.echo(f"Processed households: {len(result.processed_households)}")
+    typer.echo(f"Completed participants: {len(result.completed_participants)}")
+    typer.echo(f"Reserve exhausted: {result.exhausted_reserve}")
+
+    typer.echo("")
+    typer.echo("Completed participants")
+    for idx, participant in enumerate(result.completed_participants, start=1):
+        adult = participant.selected_adult
+        typer.echo(
+            f"{idx}. {adult.name} | age={adult.age} | islander_id={adult.islander_id} "
+            f"| house_id={participant.house_id}"
+            + (
+                f" | display_house={participant.display_house_number}"
+                if participant.display_house_number is not None
+                else ""
+            )
+        )
+
+
+@app.command("sample-village")
+def sample_village(
+    village_name: str = typer.Option(..., help="Village name, e.g. Vardo"),
+    n: int = typer.Option(..., help="Number of primary households to sample"),
+    reserve_n: int = typer.Option(20, help="Number of reserve households to pre-generate"),
+    seed: int = typer.Option(401, help="Seed for reproducible random sampling"),
+    min_age: int = typer.Option(21, help="Minimum age for adult eligibility"),
+) -> None:
+    # local auth guard only
+    ensure_auth_or_exit()
+
+    with IslandsSession.from_config() as session:
+        collector = Collector(session)
+        sampling = SamplingService(collector)
+
+        village = collector.fetch_village(village_name)
+
+        plan = SamplingPlan(
+            households_per_village=n,
+            reserve_households_per_village=reserve_n,
+            adults_only_min_age=min_age,
+            seed=seed,
+        )
+
+        result = sampling.sample_village(village=village, plan=plan)
+
+    typer.echo(f"Village: {result.village_name}")
+    typer.echo(f"Village ID: {result.village_id}")
+    typer.echo(f"Island ID: {result.island_id}")
+    typer.echo(f"Frame size: {result.frame_size}")
+    typer.echo(f"Primary households: {result.primary_household_ids}")
+    typer.echo(f"Reserve households: {result.reserve_household_ids}")
+    typer.echo("")
+
+    for sampled in result.sampled_households:
+        typer.echo(
+            f"House internal_id={sampled.house_id}"
+            + (
+                f", display={sampled.display_house_number}"
+                if sampled.display_house_number is not None
+                else ""
+            )
+        )
+        typer.echo(f"  residents={len(sampled.residents)}")
+        typer.echo(f"  eligible_adults={len(sampled.eligible_adults)}")
+        typer.echo(f"  status={sampled.status}")
+
+        if sampled.selected_adult is not None:
+            typer.echo(
+                f"  selected={sampled.selected_adult.name} "
+                f"(age={sampled.selected_adult.age}, islander_id={sampled.selected_adult.islander_id})"
+            )
+        else:
+            typer.echo("  selected=None")
+
+        typer.echo("")
 
 
 @app.command()
