@@ -109,10 +109,12 @@ SAVE_DEBUG_PAYLOADS=false
 
 ## Quick Start
 
+For a full list of the CLI commands and their arguments, you can use the `islands --help` command.
+
 ### 1. Log in
 
 ```bash
-islands auth-login --browser firefox
+islands auth-login --browser firefox|chrome
 ```
 
 ### 2. Inspect a village

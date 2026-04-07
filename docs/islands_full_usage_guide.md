@@ -972,51 +972,7 @@ Those lower layers are the most reusable part of the project.
 
 ---
 
-## 22. Recommended README link targets
-
-Once this file is added to the repo, it is a good candidate to link from the README as:
-
-- full usage guide
-- operator guide
-- command reference
-- workflow guide
-
-A good README structure would be:
-
-- quick start
-- authentication
-- most common commands
-- link to full usage guide
-- link to sampling policy
-- link to adapting-the-tool
-
----
-
-## 23. Suggested “quick start” snippet for README
-
-```bash
-# 1. log in
-islands auth-login --browser firefox
-
-# 2. quick inspection
-islands fetch-village Vardo
-
-# 3. one pilot study-default run
-islands collect-study-default-village-and-save --village-name Vardo --n 3 --reserve-n 5 --seed 401
-
-# 4. multi-village study run
-islands collect-study-default-data-and-save ^
-  --village-name Vardo ^
-  --village-name Hofn ^
-  --village-name Bjurholm ^
-  --n 40 ^
-  --reserve-n 20 ^
-  --seed 401
-```
-
----
-
-## 24. Final notes
+## 22. Final notes
 
 This tool is strongest when used in this order:
 
