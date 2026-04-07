@@ -134,17 +134,17 @@ Initial setup expansion — get the fetch/parse loop working for a single villag
 
 ## M. `services/sampling.py`
 
-- [ ] Randomly sample household ids from a village
-- [ ] Generate reserve list
-- [ ] Filter eligible adults (`age >= 21`)
-- [ ] Randomly choose one eligible adult
-- [ ] Deterministic seed support
+- [x] Randomly sample household ids from a village
+- [x] Generate reserve list
+- [x] Filter eligible adults (`age >= 21`)
+- [x] Randomly choose one eligible adult
+- [x] Deterministic seed support
 
 ## N. CLI additions
 
-- [ ] `sample-village <village_name> --n 5 --seed 123`
-- [ ] Print chosen household ids
-- [ ] Optionally print chosen eligible adult per sampled household
+- [x] `sample-village <village_name> --n 5 --seed 123`
+- [x] Print chosen household ids
+- [x] Optionally print chosen eligible adult per sampled household
 
 ---
 
@@ -157,11 +157,11 @@ Initial setup expansion — get the fetch/parse loop working for a single villag
 
 ## P. `services/normalization.py`
 
-- [ ] Extract birth village
-- [ ] Extract current village
-- [ ] Parse numeric income
-- [ ] Gather education events
-- [ ] Gather occupation evidence
+- [x] Extract birth village
+- [x] Extract current village
+- [x] Parse numeric income
+- [x] Gather education events
+- [x] Gather occupation evidence
 
 ## Q. `services/derivation.py`
 
