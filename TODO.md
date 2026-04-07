@@ -11,30 +11,181 @@ Initial setup expansion — get the fetch/parse loop working for a single villag
 - [x] `islander_page(islander_id: str) -> str`
 - [x] `consent(islander_id: str) -> str`
 - [x] `chat(chatid: str, message: str) -> str`
+- [ ] `task(islander_id: str, code: str) -> str`
+- [ ] `contact(islander_id: str) -> str`
 
 ## B. `client/session.py`
 
 - [x] Authenticated `httpx.Client` wrapper
-- [x] `IslandsSession.from_env()`
-- [x] `IslandsSession.from_cookie_header(base_url, cookie_header)`
-- [x] Basic timeout and retry config
+- [x] `IslandsSession.from_config()`
+- [ ] `IslandsSession.from_cookie_header(base_url, cookie_header)` if we want explicit raw-cookie construction
+- [x] Basic timeout and pacing config
+- [ ] Retry policy if not yet actually wired in
+- [ ] Centralized detection/handling for obvious unauthenticated responses
 
 ## C. `models/pages.py`
 
-- [ ] `VillagePage`
-- [ ] `HouseholdPage`
-- [ ] `Resident`
-- [ ] `IslanderPage`
-- [ ] `ChatResponse`
-- [ ] `ConsentResponse`
+- [x] `VillagePage`
+- [x] `HouseholdPage`
+- [x] `Resident`
+- [x] `IslanderPage`
+- [x] `ChatResponse`
+- [x] `ConsentResponse`
+- [x] Expand `IslanderPage` with:
+  - [x] `summary_lines`
+  - [x] `current_residence`
+  - [x] `age`
+  - [x] `income_summary`
+  - [x] `occupation_summary`
+  - [x] `timeline_events`
+  - [x] `chatid`
+  - [x] `awake`
 
 ## D. `parsers/village.py`
 
-- [ ] Parse village id and island id from HTML
-- [ ] Parse house id list from HTML
-- [ ] Return `VillagePage`
+- [x] Parse village id and island id from HTML
+- [x] Parse house id list from HTML
+- [x] Return `VillagePage`
 
 ## E. `services/collection.py`
 
-- [ ] `Collector` class wiring session + parsers
-- [ ] `fetch_village(village_name: str) -> VillagePage`
+- [x] `Collector` class wiring session + parsers
+- [x] `fetch_village(village_name: str) -> VillagePage`
+- [ ] `fetch_household(village_id: int, house_id: int) -> HouseholdPage`
+- [ ] `fetch_islander(islander_id: str) -> IslanderPage`
+- [ ] `request_consent(islander_id: str) -> ConsentResponse`
+- [ ] `ask(chatid: str, question: str) -> ChatResponse`
+
+---
+
+# Next vertical slice — household pages
+
+## F. `parsers/house.py`
+
+- [x] Parse house title / house id from HTML
+- [x] Parse resident rows
+- [x] Parse resident name
+- [x] Parse resident age
+- [x] Parse resident `islander_id`
+- [x] Return `HouseholdPage`
+- [x] Preserve both requested internal house id and displayed house number
+
+## G. CLI additions
+
+- [x] `fetch-household --village-id <id> --house-id <id>`
+- [x] Print resident count and resident list
+- [x] Confirm ages and islander ids parse correctly
+
+## G. Household fetch architecture
+
+- [x] `Collector.fetch_household(village: VillagePage, house_id: int)`
+- [x] Use `VillagePage` context instead of loose `village_id` / `village_name`
+
+---
+
+# Next vertical slice — islander pages
+
+## H. `parsers/islander.py`
+
+- [x] Parse islander id from script/page
+- [x] Parse displayed name
+- [x] Parse `chatid`
+- [x] Parse `awake`
+- [x] Parse summary lines
+- [x] Parse current residence
+- [x] Parse age
+- [x] Parse money summary
+- [x] Parse occupation summary
+- [x] Parse timeline events
+- [x] Return `IslanderPage`
+
+## I. CLI additions
+
+- [x] `fetch-islander <islander_id>`
+- [x] Print name, chatid, awake status
+- [x] Print summary lines
+- [x] Print first few timeline events
+
+---
+
+# Chat / consent slice
+
+## J. `parsers/chat.py`
+
+- [x] Parse raw `alice.php` response
+- [x] Extract plain response text
+- [x] Extract `key=value` updates
+- [x] Return `ChatResponse`
+
+## K. `parsers/consent.py`
+
+- [x] Parse semicolon-delimited consent response
+- [x] Return `ConsentResponse`
+
+## L. CLI additions
+
+- [x] `auth-test` remains manual validation
+- [x] `ask <islander_id> "<question>"` helper command
+- [x] `consent <islander_id>` helper command
+
+---
+
+# Sampling layer
+
+## M. `services/sampling.py`
+
+- [ ] Randomly sample household ids from a village
+- [ ] Generate reserve list
+- [ ] Filter eligible adults (`age >= 21`)
+- [ ] Randomly choose one eligible adult
+- [ ] Deterministic seed support
+
+## N. CLI additions
+
+- [ ] `sample-village <village_name> --n 5 --seed 123`
+- [ ] Print chosen household ids
+- [ ] Optionally print chosen eligible adult per sampled household
+
+---
+
+# Normalization layer
+
+## O. `models/normalized.py`
+
+- [ ] `NormalizedIslander`
+- [ ] `AnalysisRow`
+
+## P. `services/normalization.py`
+
+- [ ] Extract birth village
+- [ ] Extract current village
+- [ ] Parse numeric income
+- [ ] Gather education events
+- [ ] Gather occupation evidence
+
+## Q. `services/derivation.py`
+
+- [ ] Derive `immigrant_other_island`
+- [ ] Derive `education_level`
+- [ ] Derive `occupation_group`
+- [ ] Build final analysis row
+
+---
+
+# Tests / fixtures
+
+## R. `tests/fixtures/`
+
+- [ ] Save one known village HTML
+- [ ] Save one known house HTML
+- [ ] Save one known islander HTML
+- [ ] Save one known chat response
+- [ ] Save one known consent response
+
+## S. Parser tests
+
+- [ ] `test_village_parser.py`
+- [ ] `test_house_parser.py`
+- [ ] `test_islander_parser.py`
+- [ ] `test_chat_parser.py`
+- [ ] `test_consent_parser.py`

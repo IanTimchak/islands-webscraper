@@ -11,6 +11,7 @@ from scraper.auth_browser import (
 )
 from scraper.client.session import IslandsSession
 from scraper.services.auth import require_auth_present_and_fresh, validate_current_auth
+from scraper.services.collection import Collector
 
 app = typer.Typer(help="Islands webscraper CLI")
 
@@ -32,12 +33,128 @@ def fetch_village(village_name: str) -> None:
     # cheap local guard only
     ensure_auth_or_exit()
 
-    # makes the real request
     with IslandsSession.from_config() as session:
-        html = session.get_village_html(village_name)
+        collector = Collector(session)
+        village = collector.fetch_village(village_name)
 
-    # simple smoke-test output for now
-    print(f"Fetched {len(html)} characters from village page: {village_name}")
+    typer.echo(f"Village: {village.village_name}")
+    typer.echo(f"Village ID: {village.village_id}")
+    typer.echo(f"Island ID: {village.island_id}")
+    typer.echo(f"Households found: {len(village.house_ids)}")
+
+
+@app.command("consent")
+def consent(
+    village_name: str = typer.Option(..., help="Village name where the islander was found"),
+    islander_id: str = typer.Option(..., help="Islander id"),
+) -> None:
+    ensure_auth_or_exit()
+
+    with IslandsSession.from_config() as session:
+        collector = Collector(session)
+
+        # fetch village context first
+        village = collector.fetch_village(village_name)
+
+        # fetch the islander page so consent request uses proper context
+        islander = collector.fetch_islander(village=village, islander_id=islander_id)
+
+        # send consent request
+        consent_response = collector.request_consent(islander)
+
+    typer.echo(f"Islander ID: {consent_response.islander_id}")
+    typer.echo(f"Outcome: {consent_response.outcome}")
+    typer.echo(f"Timestamp: {consent_response.timestamp_text}")
+    typer.echo(f"Message: {consent_response.message}")
+
+
+@app.command("ask")
+def ask(
+    village_name: str = typer.Option(..., help="Village name where the islander was found"),
+    islander_id: str = typer.Option(..., help="Islander id"),
+    question: str = typer.Option(..., help="Question to ask"),
+) -> None:
+    ensure_auth_or_exit()
+
+    with IslandsSession.from_config() as session:
+        collector = Collector(session)
+
+        # get village context first
+        village = collector.fetch_village(village_name)
+
+        # get islander page so we have the chatid
+        islander = collector.fetch_islander(village=village, islander_id=islander_id)
+
+        # ask the question through alice.php
+        response = collector.ask(islander=islander, question=question)
+
+    typer.echo(f"Question: {response.question}")
+    typer.echo(f"Chat ID: {response.chatid}")
+    typer.echo("")
+    typer.echo("Response:")
+    typer.echo(response.response_text or "<empty>")
+
+    typer.echo("")
+    typer.echo(f"State updates: {len(response.state_updates)}")
+    for key, value in response.state_updates.items():
+        typer.echo(f"- {key}={value}")
+
+
+@app.command("fetch-islander")
+def fetch_islander(
+    village_name: str = typer.Option(..., help="Village name where the islander was found"),
+    islander_id: str = typer.Option(..., help="Islander id"),
+) -> None:
+    ensure_auth_or_exit()
+
+    with IslandsSession.from_config() as session:
+        collector = Collector(session)
+        village = collector.fetch_village(village_name)
+        islander = collector.fetch_islander(village=village, islander_id=islander_id)
+
+    typer.echo(f"Name: {islander.name}")
+    typer.echo(f"Islander ID: {islander.islander_id}")
+    typer.echo(f"Chat ID: {islander.chatid}")
+    typer.echo(f"Awake: {islander.awake}")
+    typer.echo(f"Age: {islander.age}")
+    typer.echo(f"Occupation summary: {islander.occupation_summary}")
+    typer.echo(f"Money summary: {islander.money_summary}")
+    typer.echo(f"Current residence: {islander.current_residence}")
+    typer.echo(f"Timeline events: {len(islander.timeline_events)}")
+
+    for event in islander.timeline_events[:5]:
+        typer.echo(
+            f"- age_stage={event.age_stage} | {event.date_code} | {event.text}"
+        )
+
+
+@app.command("fetch-household")
+def fetch_household(
+    village_name: str = typer.Option(..., help="Village name, e.g. Vardo"),
+    house_id: int = typer.Option(..., help="Internal house id"),
+) -> None:
+    ensure_auth_or_exit()
+
+    with IslandsSession.from_config() as session:
+        collector = Collector(session)
+
+        # get the village object first so household fetch uses the full context
+        village = collector.fetch_village(village_name)
+        household = collector.fetch_household(village=village, house_id=house_id)
+
+    typer.echo(f"Village: {village.village_name}")
+    typer.echo(f"Village ID: {household.village_id}")
+    typer.echo(f"Internal House ID: {household.house_id}")
+
+    if household.display_house_number is not None:
+        typer.echo(f"Displayed House Number: {household.display_house_number}")
+
+    typer.echo(f"Residents found: {len(household.residents)}")
+
+    for idx, resident in enumerate(household.residents, start=1):
+        typer.echo(
+            f"{idx}. {resident.name} | age={resident.age} | islander_id={resident.islander_id}"
+        )
 
 
 @app.command("auth-login")
