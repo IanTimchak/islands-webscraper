@@ -287,6 +287,10 @@ data/
 
 For multi-village study runs, the tool writes one study-level run directory with per-village subdirectories plus aggregated study-level analysis outputs.
 
+## Task run interruption and resumption
+
+If study collection tasks are interrupted, they can be resumed by finding the run_state run_id and using the `resume-study-run` command.
+
 ## Current Study Defaults
 
 The current convenience commands are set up for the immigrant / income workflow.
