@@ -136,10 +136,10 @@ Full documentation lives in [`docs/`](docs/).
 
 | Doc | Description |
 |---|---|
-| [`docs/api.md`](docs/api.md) | HTTP endpoint model, Python client API, and all service and sampling methods, the unofficial API surface for The Islands. |
-| [`docs/architecture.md`](docs/architecture.md) | Repository structure, layer responsibilities, and design principles |
-| [`docs/data-model.md`](docs/data-model.md) | All Pydantic models across the raw, normalized, and analysis stages |
-| [`docs/workflows.md`](docs/workflows.md) | End-to-end collection and dataset build workflows with CLI and Python examples |
+| [`api`](docs/api.md) | HTTP endpoint model, Python client API, and all service and sampling methods, the unofficial API surface for The Islands. |
+| [`architecture`](docs/architecture.md) | Repository structure, layer responsibilities, and design principles |
+| [`data-model`](docs/data-model.md) | All Pydantic models across the raw, normalized, and analysis stages |
+| [`workflows`](docs/workflows.md) | End-to-end collection and dataset build workflows with CLI and Python examples |
 
 ## Rate Limiting
 
