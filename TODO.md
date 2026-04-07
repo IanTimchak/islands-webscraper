@@ -62,18 +62,24 @@ Initial setup expansion — get the fetch/parse loop working for a single villag
 
 ## F. `parsers/house.py`
 
-- [ ] Parse house title / house id from HTML
-- [ ] Parse resident rows
-- [ ] Parse resident name
-- [ ] Parse resident age
-- [ ] Parse resident `islander_id`
-- [ ] Return `HouseholdPage`
+- [x] Parse house title / house id from HTML
+- [x] Parse resident rows
+- [x] Parse resident name
+- [x] Parse resident age
+- [x] Parse resident `islander_id`
+- [x] Return `HouseholdPage`
+- [x] Preserve both requested internal house id and displayed house number
 
 ## G. CLI additions
 
-- [ ] `fetch-household --village-id <id> --house-id <id>`
-- [ ] Print resident count and resident list
-- [ ] Confirm ages and islander ids parse correctly
+- [x] `fetch-household --village-id <id> --house-id <id>`
+- [x] Print resident count and resident list
+- [x] Confirm ages and islander ids parse correctly
+
+## G. Household fetch architecture
+
+- [x] `Collector.fetch_household(village: VillagePage, house_id: int)`
+- [x] Use `VillagePage` context instead of loose `village_id` / `village_name`
 
 ---
 
