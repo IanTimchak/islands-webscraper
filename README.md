@@ -1,23 +1,41 @@
 # 🏝️ islands-webscraper 🏝️
 
-A Python utility for structured data collection from the Islands teaching simulator.
+A Python CLI and library for structured, reproducible data collection from the Islands teaching simulator.
 
-This project provides a typed client, HTML/text parsers, and reproducible collection pipelines for sampling villages, households, and islanders, then building raw, normalized, and analysis-ready datasets.
+This project provides:
 
-## Features
-
-- Session-authenticated HTTP client
-- Village, household, islander, consent, and chat endpoint support
-- Random household and adult sampling workflows
-- Raw / normalized / analysis-layer exports
-- Built-in rate limiting, retry, and resumable collection
-- CLI and Python library interfaces
+- an authenticated HTTP client
+- HTML/text parsers for observed simulator endpoints
+- reproducible household and adult sampling workflows
+- consent-aware participant collection
+- normalization and minimal analysis-row derivation
+- run-scoped persistence for raw/evidence, normalized, and analysis outputs
 
 ## Project Status
 
 This is an unofficial utility built around observed site behavior and page JavaScript. It is not an official API client.
 
-Currently in development — a functioning release is not yet available.
+The core toolchain is functional and supports:
+
+- village / household / islander inspection
+- sampling and reserve replacement workflows
+- configurable participant collection
+- study-default convenience commands
+- normalization and deterministic derivation
+- run-scoped save/export workflows
+- multi-village study runs
+
+## Features
+
+- Session-authenticated HTTP client
+- Village, household, islander, consent, and chat endpoint support
+- Random household and adult sampling workflows with reproducible seeds
+- Consent-aware collection workflow with reserve replacement
+- Configurable participant collection plans
+- Study-default convenience commands for the current immigrant / income workflow
+- Raw/evidence, normalized, and analysis-layer persistence
+- Run-scoped output directories to avoid cross-run file mixing
+- CLI interface for inspection, collection, normalization, derivation, and export
 
 ## Installation
 
@@ -25,124 +43,327 @@ Currently in development — a functioning release is not yet available.
 pip install -e .
 ```
 
-## Quick Start
+For tests and development tools:
 
-### 1. Configure a session
+```bash
+pip install -e .[dev]
+```
 
-Create a `.env` file from `.env.example` and provide:
+## Authentication
+
+The simulator requires an authenticated browser session.
+
+The CLI supports:
+
+- guided browser login and cookie import
+- manual cookie-header entry
+- explicit auth validation
+
+### Guided login
+
+```bash
+islands auth-login --browser firefox
+```
+
+or
+
+```bash
+islands auth-login --browser chrome
+```
+
+### Manual cookie entry
+
+```bash
+islands auth-set-cookie
+```
+
+### Test auth
+
+```bash
+islands auth-test
+```
+
+### Clear auth
+
+```bash
+islands auth-clear
+```
+
+## Configuration
+
+Create a `.env` file from `.env.example`.
+
+Typical values:
 
 ```env
 ISLANDS_BASE_URL=https://islands.smp.uq.edu.au
-ISLANDS_COOKIE_HEADER=your_session_cookie_here
+ISLANDS_COOKIE_HEADER=
+ISLANDS_AUTH_CAPTURED_AT=
+REQUEST_TIMEOUT_SECONDS=30
+REQUEST_BASE_DELAY_SECONDS=1.2
+REQUEST_JITTER_MIN_SECONDS=0.4
+REQUEST_JITTER_MAX_SECONDS=1.0
+DATA_DIR=data
+SAVE_DEBUG_PAYLOADS=false
+```
+
+## Quick Start
+
+### 1. Log in
+
+```bash
+islands auth-login --browser firefox
 ```
 
 ### 2. Inspect a village
 
 ```bash
-islands inspect village Vardo
+islands fetch-village Vardo
 ```
 
-### 3. Run raw collection
+### 3. Inspect a household
 
 ```bash
-islands collect raw \
-  --villages Vardo Hofn Akkeshi Arcadia Pauma Riroua \
-  --per-village 40 \
-  --output-dir data/
+islands fetch-household --village-name Vardo --house-id 5
 ```
 
-### 4. Build normalized dataset
+### 4. Inspect an islander
 
 ```bash
-islands build normalized --input-dir data/ --output-dir data/
+islands fetch-islander --village-name Vardo --islander-id j4vw2wjwr6
 ```
 
-### 5. Build final analysis dataset
+### 5. Pilot one study-default village run
 
 ```bash
-islands build analysis --input-dir data/ --output-dir data/
+islands collect-study-default-village-and-save --village-name Vardo --n 3 --reserve-n 5 --seed 401
+```
+
+### 6. Run a study across multiple villages
+
+In `cmd.exe`:
+
+```bat
+islands collect-study-default-data-and-save ^
+  --village-name Vardo ^
+  --village-name Hofn ^
+  --village-name Bjurholm ^
+  --n 40 ^
+  --reserve-n 20 ^
+  --seed 401
+```
+
+## Common CLI Workflows
+
+### Inspection
+
+```bash
+islands fetch-village Vardo
+islands fetch-household --village-name Vardo --house-id 5
+islands fetch-islander --village-name Vardo --islander-id j4vw2wjwr6
+islands consent --village-name Vardo --islander-id j4vw2wjwr6
+islands ask --village-name Vardo --islander-id j4vw2wjwr6 --question "Which village were you born in?"
+```
+
+### Sampling only
+
+```bash
+islands sample-village --village-name Vardo --n 5 --reserve-n 10 --seed 401
+```
+
+### Consent-aware village workflow
+
+```bash
+islands collect-village --village-name Vardo --n 5 --reserve-n 10 --seed 401
+```
+
+### Configurable participant collection
+
+```bat
+islands collect-participant ^
+  --village-name Vardo ^
+  --islander-id j4vw2wjwr6 ^
+  --summary-field age ^
+  --summary-field current_residence ^
+  --summary-field money_summary ^
+  --question "birth_village=Which village were you born in?" ^
+  --question "income=What is your income?"
+```
+
+### Study-default participant collection
+
+```bash
+islands collect-study-default-participant --village-name Vardo --islander-id j4vw2wjwr6
+```
+
+### Collect + normalize
+
+```bash
+islands collect-study-default-and-normalize-participant --village-name Vardo --islander-id j4vw2wjwr6
+```
+
+### Collect + normalize + derive
+
+```bash
+islands collect-study-default-and-derive-participant --village-name Vardo --islander-id j4vw2wjwr6
+```
+
+### Save one participant run
+
+```bash
+islands collect-study-default-and-save-participant --village-name Vardo --islander-id j4vw2wjwr6
+```
+
+### Save one village run
+
+```bash
+islands collect-study-default-village-and-save --village-name Vardo --n 5 --reserve-n 10 --seed 401
+```
+
+### Save a multi-village study run
+
+```bat
+islands collect-study-default-data-and-save ^
+  --village-name Vardo ^
+  --village-name Hofn ^
+  --village-name Bjurholm ^
+  --n 40 ^
+  --reserve-n 20 ^
+  --seed 401
 ```
 
 ## Python Example
 
 ```python
-from islands_webscraper.client.session import IslandsSession
-from islands_webscraper.services.collection import Collector
+from scraper.client.session import IslandsSession
+from scraper.services.collection import Collector
 
-session = IslandsSession.from_env()
-collector = Collector(session)
+with IslandsSession.from_config() as session:
+    collector = Collector(session)
 
-village = collector.fetch_village("Vardo")
-print(village.village_id, len(village.house_ids))
+    village = collector.fetch_village("Vardo")
+    print(village.village_id, len(village.house_ids))
 
-household = collector.fetch_household(village_id=village.village_id, house_id=village.house_ids[0])
-print(household.residents)
+    household = collector.fetch_household(village=village, house_id=village.house_ids[0])
+    print(household.residents)
 
-islander = collector.fetch_islander(household.residents[0].islander_id)
-print(islander.name, islander.chatid)
+    islander = collector.fetch_islander(
+        village=village,
+        islander_id=household.residents[0].islander_id,
+    )
+    print(islander.name, islander.chatid)
 
-collector.request_consent(islander.islander_id)
-reply = collector.ask(islander.chatid, "Which village were you born in?")
-print(reply.response_text)
+    consent = collector.request_consent(islander)
+    print(consent.outcome, consent.message)
+
+    reply = collector.ask(islander=islander, question="Which village were you born in?")
+    print(reply.response_text)
 ```
 
 ## Data Layers
 
-This repo stores data in three layers:
+This repo works with three practical layers of data:
 
-| Layer | Description |
-|---|---|
-| **Raw** | Original HTML/text payloads from the simulator |
-| **Normalized** | Parsed structured facts such as birth village, current village, income, education evidence |
-| **Analysis** | Minimal final variables used in statistical analysis |
+| Layer              | Description                                                                                                                                            |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Raw / Evidence** | Compact structured evidence such as sampling decisions, processed households, consent outcomes, chat responses, and participant collection records     |
+| **Normalized**     | Parsed participant facts such as birth village, current village, money summary value, income signal, and education evidence                            |
+| **Analysis**       | Minimal derived fields used in downstream statistical analysis, such as current island, birth island, immigrant status, and compact education labeling |
 
-## CLI Commands
+## Output Model
 
-### Inspect
+Outputs are **run-scoped**.
 
-```bash
-islands inspect village <VILLAGE_NAME>
-islands inspect household --village-id <ID> --house-id <ID>
-islands inspect islander <ISLANDER_ID>
-```
-
-### Collection
-
-```bash
-islands collect raw --villages ... --per-village 40
-```
-
-### Dataset builds
-
-```bash
-islands build normalized
-islands build analysis
-```
-
-## Output
-
-Default output structure:
+Each save command writes to a new run directory by default:
 
 ```
 data/
-├── raw/
-├── normalized/
-└── analysis/
+  runs/
+    2026-04-07T21-18-03_village-Vardo_n-5_seed-401_ab12cd34/
+      raw/
+      normalized/
+      analysis/
 ```
+
+For multi-village study runs, the tool writes one study-level run directory with per-village subdirectories plus aggregated study-level analysis outputs.
+
+## Current Study Defaults
+
+The current convenience commands are set up for the immigrant / income workflow.
+
+### Default summary fields
+
+- `age`
+- `current_residence`
+- `money_summary`
+- `occupation_summary`
+
+### Default chat questions
+
+- `birth_village = Which village were you born in?`
+- `income = What is your income?`
+
+These defaults are used by all commands containing `study-default`.
+
+## Testing
+
+Run tests from the repository root:
+
+```bash
+pytest
+```
+
+Run one test file:
+
+```bash
+pytest tests\test_islander_parser.py -v
+```
+
+If `pytest` is not recognized:
+
+```bash
+python -m pytest -v
+```
+
+Current high-value test areas:
+
+- village parser
+- house parser
+- islander parser
+- consent parser
+- chat parser
+- normalization
+- derivation
 
 ## Documentation
 
-Full documentation lives in [`docs/`](docs/).
+See the full operator guide:
 
-| Doc | Description |
-|---|---|
-| [`api`](docs/api.md) | HTTP endpoint model, Python client API, and all service and sampling methods, the unofficial API surface for The Islands. |
-| [`architecture`](docs/architecture.md) | Repository structure, layer responsibilities, and design principles |
-| [`data-model`](docs/data-model.md) | All Pydantic models across the raw, normalized, and analysis stages |
-| [`workflows`](docs/workflows.md) | End-to-end collection and dataset build workflows with CLI and Python examples |
+- [`Full Usage Guide`](docs/full-usage-guide.md)
 
-## Rate Limiting
+Additional project docs:
 
-This utility is intentionally conservative. Requests are sequential by default, with configurable delays, jitter, and retries.
+- [`API Reference`](docs/api.md) - HTTP endpoint model, Python client API, and all service and sampling methods
+- [`Architecture`](docs/architecture.md) - repository structure, layer responsibilities, and design principles
+- [`Data Model`](docs/data-model.md) - all Pydantic models across the raw, normalized, and analysis stages
+- [`Sampling Policy`](docs/sampling-policy.md) - the project’s sampling methodology, including purposive village choice, random household sampling, reserve handling, and reproducibility policy
+- [`Adapting the Tool`](docs/adapting-the-tool.md) - guidance for future users on what is generic, what is configurable, and what is currently shaped around the immigrant / income study
+- [`Workflows`](docs/workflows.md) - end-to-end workflow references for common use cases, including village inspection, participant collection, study-default runs, and multi-village study collection
 
-> **Note:** This project uses an unofficial interface inferred from publicly observable site behavior and authenticated in-browser requests. Use responsibly.
+## Notes on Scope
+
+This project intentionally does **not** try to absorb every downstream analysis transform.
+
+Some recodes are better handled after export in R or Python, especially when they are:
+
+- subjective
+- likely to change
+- study-specific beyond deterministic mapping
+
+Examples include occupation grouping, alternate education bins, custom income bands, and model-specific exclusion rules.
+
+## Rate Limiting and Safety
+
+This utility is intentionally conservative. Requests are sequential by default, with configurable delay and jitter settings to reduce load on the simulator.
+
+> **Note:** This project uses an unofficial interface inferred from observable site behavior and authenticated in-browser requests. Use responsibly.

@@ -19,6 +19,7 @@ dependencies = [
   "python-dotenv>=1.0",
   "tenacity>=8.2",
   "browser-cookie3>=0.19",
+  "rich>=13.7",
 ]
 
 [project.optional-dependencies]

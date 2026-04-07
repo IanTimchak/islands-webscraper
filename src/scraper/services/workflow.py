@@ -64,10 +64,15 @@ class CollectionWorkflow:
         reserve_queue = deque(reserve_household_ids)
         household_queue = deque(primary_household_ids)
 
-        self.progress.emit(0, f"Starting village collection: {village.village_name}")
-        self.progress.emit(
-            0,
-            f"Target completed participants: {sampling_plan.households_per_village}",
+        processed_households = 0
+
+        village_task = self.progress.start_task(
+            description=(
+                f"[{village.village_name}] 0/{sampling_plan.households_per_village} "
+                f"participants | processed 0 households"
+            ),
+            total=sampling_plan.households_per_village,
+            level=0,
         )
 
         while (
@@ -75,6 +80,7 @@ class CollectionWorkflow:
             and len(result.collected_participant_results) < sampling_plan.households_per_village
         ):
             house_id = household_queue.popleft()
+            processed_households += 1
 
             sampled = self.sampling.select_adult_from_household(
                 village=village,
@@ -85,37 +91,27 @@ class CollectionWorkflow:
 
             result.processed_households.append(sampled)
 
-            display_part = (
-                f" (display house {sampled.display_house_number})"
-                if sampled.display_house_number is not None
-                else ""
-            )
-
-            self.progress.emit(
-                1,
-                f"House {sampled.house_id}{display_part}: "
-                f"{len(sampled.eligible_adults)} eligible adults",
-            )
-
             if sampled.selected_adult is None:
                 sampled.status = "no_eligible_adult"
                 sampled.replacement_reason = "no adult age 21+ in household"
-                self.progress.emit(1, "No eligible adult found")
+
+                self.progress.update_task(
+                    village_task,
+                    description=(
+                        f"[{village.village_name}] "
+                        f"{len(result.collected_participant_results)}/{sampling_plan.households_per_village} "
+                        f"participants | processed {processed_households} households | "
+                        f"house {sampled.house_id}: no eligible adult"
+                    ),
+                )
 
                 if reserve_queue:
                     replacement_house_id = reserve_queue.popleft()
                     household_queue.append(replacement_house_id)
-                    self.progress.emit(1, f"Using reserve household {replacement_house_id}")
                 else:
                     result.exhausted_reserve = True
 
                 continue
-
-            self.progress.emit(
-                1,
-                f"Selected adult: {sampled.selected_adult.name} "
-                f"(age={sampled.selected_adult.age})",
-            )
 
             islander = self.collector.fetch_islander(
                 village=village,
@@ -132,20 +128,25 @@ class CollectionWorkflow:
                 sampled.status = "declined_consent"
                 sampled.replacement_reason = "selected adult declined consent"
 
-                self.progress.emit(1, f"Consent declined: {consent.message or consent.outcome}")
+                self.progress.update_task(
+                    village_task,
+                    description=(
+                        f"[{village.village_name}] "
+                        f"{len(result.collected_participant_results)}/{sampling_plan.households_per_village} "
+                        f"participants | processed {processed_households} households | "
+                        f"house {sampled.house_id}: consent declined"
+                    ),
+                )
 
                 if reserve_queue:
                     replacement_house_id = reserve_queue.popleft()
                     household_queue.append(replacement_house_id)
-                    self.progress.emit(1, f"Using reserve household {replacement_house_id}")
                 else:
                     result.exhausted_reserve = True
 
                 continue
 
             sampled.status = "consented"
-            self.progress.emit(1, f"Consent accepted: {consent.message or consent.outcome}")
-            self.progress.emit(1, f"Collecting participant data for {sampled.selected_adult.name}")
 
             completed_participant = CollectedParticipant(
                 village_name=village.village_name,
@@ -168,10 +169,14 @@ class CollectionWorkflow:
             result.completed_participants.append(completed_participant)
             result.collected_participant_results.append(participant_result)
 
-            self.progress.emit(
-                1,
-                f"Completed participants: "
-                f"{len(result.collected_participant_results)}/{sampling_plan.households_per_village}",
+            self.progress.update_task(
+                village_task,
+                advance=1,
+                description=(
+                    f"[{village.village_name}] "
+                    f"{len(result.collected_participant_results)}/{sampling_plan.households_per_village} "
+                    f"participants | processed {processed_households} households"
+                ),
             )
 
         if (
@@ -181,13 +186,13 @@ class CollectionWorkflow:
         ):
             result.exhausted_reserve = True
 
-        self.progress.emit(
-            0,
-            f"Finished village collection: "
-            f"{len(result.collected_participant_results)}/{sampling_plan.households_per_village} completed",
+        final_description = (
+            f"[{village.village_name}] "
+            f"{len(result.collected_participant_results)}/{sampling_plan.households_per_village} "
+            f"participants | processed {processed_households} households"
         )
-
         if result.exhausted_reserve:
-            self.progress.emit(0, "Reserve households exhausted")
+            final_description += " | reserve exhausted"
 
+        self.progress.finish_task(village_task, description=final_description)
         return result
