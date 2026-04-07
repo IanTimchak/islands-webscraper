@@ -16,6 +16,7 @@ This project provides a typed client, HTML/text parsers, and reproducible collec
 ## Project Status
 
 This is an unofficial utility built around observed site behavior and page JavaScript. It is not an official API client.
+Currently, the application is still in development and a functioning release is not available.
 
 ## Installation
 
