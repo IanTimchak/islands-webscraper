@@ -15,6 +15,9 @@ class Settings(BaseModel):
     request_jitter_min_seconds: float = float(os.getenv("REQUEST_JITTER_MIN_SECONDS", "0.4"))
     request_jitter_max_seconds: float = float(os.getenv("REQUEST_JITTER_MAX_SECONDS", "1.0"))
 
+    data_dir: str = os.getenv("DATA_DIR", "data")
+    save_debug_payloads: bool = os.getenv("SAVE_DEBUG_PAYLOADS", "false").lower() == "true"
+
 
 def get_cookie_header() -> str:
     load_dotenv(override=True)

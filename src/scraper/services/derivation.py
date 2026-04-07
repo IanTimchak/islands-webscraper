@@ -13,6 +13,7 @@ class DerivationService:
     - current island derivation
     - birth island derivation
     - immigrant status derivation
+    - compact education categorization for analysis output
 
     Subjective recodes like occupation grouping are left for downstream transforms.
     """
@@ -29,6 +30,10 @@ class DerivationService:
         immigrant_other_island = self._derive_immigrant_other_island(
             current_island_id=current_island_id,
             birth_island_id=birth_island_id,
+        )
+
+        latest_education_event, education_label = self._derive_education(
+            normalized.education_events
         )
 
         return AnalysisRow(
@@ -50,7 +55,8 @@ class DerivationService:
             income_numeric=normalized.income_numeric,
             income_text_normalized=normalized.income_text_normalized,
             occupation_text=normalized.occupation_text,
-            education_events=normalized.education_events,
+            latest_education_event=latest_education_event,
+            education_label=education_label,
         )
 
     def _map_village_to_island(self, village_name: str | None) -> int | None:
@@ -66,3 +72,24 @@ class DerivationService:
         if current_island_id is None or birth_island_id is None:
             return None
         return current_island_id != birth_island_id
+
+    def _derive_education(
+        self,
+        education_events: list[str],
+    ) -> tuple[str | None, str | None]:
+        if not education_events:
+            return None, "no_graduation_event"
+
+        latest_event = education_events[-1].strip()
+        lowered = latest_event.lower()
+
+        if "university" in lowered:
+            return latest_event, "university"
+
+        if "high school" in lowered:
+            return latest_event, "high_school"
+
+        if "elementary" in lowered:
+            return latest_event, "elementary"
+
+        return latest_event, "graduated_other"
