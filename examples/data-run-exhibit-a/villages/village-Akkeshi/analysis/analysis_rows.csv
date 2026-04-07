@@ -1,0 +1,7 @@
+village_name,village_id,island_id,islander_id,islander_name,age,current_village,current_island_id,birth_village,birth_island_id,immigrant_other_island,current_residence_raw,money_summary_raw,money_summary_value,income_response_raw,income_numeric,income_text_normalized,occupation_text,latest_education_event,education_label
+Akkeshi,14,1,m56jte7zcx,Anund Bager,31,Akkeshi,1,Takazaki,1,False,Lives in Akkeshi 163,"$5,451",5451,I earn around $57 a day as a constable.,57,numeric,Constable,Graduated from University of Arcadia,university
+Akkeshi,14,1,2dhhpsgq7u,Mark Morris,27,Akkeshi,1,Arcadia,1,False,Lives in Akkeshi 104,"$3,794",3794,I earn around $38 a day as a cheesemaker.,38,numeric,Cheesemaker,Graduated from Arcadia High School,high_school
+Akkeshi,14,1,nhjfjyd7q9,Sayumi Erikawa,60,Akkeshi,1,Arcadia,1,False,Lives in Akkeshi 125,"$6,727",6727,I earn around $63 a day as a midwife.,63,numeric,Midwife,Graduated from University of Arcadia,university
+Akkeshi,14,1,xt2cr9duj6,Selvan Sharma,39,Akkeshi,1,Nelson,1,False,Lives in Akkeshi 247,"$4,692",4692,I earn around $36 a day as a dairy farmer.,36,numeric,Dairy Farmer,Graduated from Nelson High School,high_school
+Akkeshi,14,1,p6ralrcaux,Ivonne Ernst,24,Akkeshi,1,Vardo,0,True,Lives in Akkeshi 476,"$3,603",3603,I earn around $40 a day as a sheep farmer.,40,numeric,Sheep Farmer,Graduated from Vardo High School,high_school
+Akkeshi,14,1,yc4h3aey7r,Ross Kimura,60,Akkeshi,1,Biruwa,1,False,Lives in Akkeshi 529,"$3,875",3875,I don't earn anything.,0,no_income,Hiking Club,Graduated from University of Arcadia,university

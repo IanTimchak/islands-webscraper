@@ -1,0 +1,55 @@
+village_name,village_id,island_id,islander_id,islander_name,age,current_village,current_island_id,birth_village,birth_island_id,immigrant_other_island,current_residence_raw,money_summary_raw,money_summary_value,income_response_raw,income_numeric,income_text_normalized,occupation_text,latest_education_event,education_label
+Vardo,0,0,lpsgksm9fd,Magnar Sorensen,48,Vardo,0,Helluland,0,False,Lives in Vardo 670,"$4,175",4175,I earn around $62 a day as a sculptor.,62,numeric,Sculptor,Graduated from Hofn University,university
+Vardo,0,0,gvsyaayt33,Gen Collins,50,Vardo,0,Blonduos,0,False,Lives in Vardo 272,"$2,310",2310,I earn around $27 a day as a barista.,27,numeric,Barista,Graduated from Hofn High School,high_school
+Vardo,0,0,qj4bjwspn3,Akira Morris,50,Vardo,0,Bjurholm,0,False,Lives in Vardo 161,"$7,902",7902,I earn around $35 a day as a florist.,35,numeric,Florist,Graduated from Bjurholm High School,high_school
+Vardo,0,0,cnyn3t7q4l,Darran Docherty,41,Vardo,0,Hofn,0,False,Lives in Vardo 733,"$1,732",1732,I earn around $25 a day as a waiter.,25,numeric,Waiter,Graduated from Hofn University,university
+Vardo,0,0,l974v54vny,Soren Solberg,31,Vardo,0,Hofn,0,False,Lives in Vardo 207,"$2,464",2464,I earn around $39 a day as a musician.,39,numeric,Musician,Graduated from Hofn University,university
+Vardo,0,0,ggn655wzw8,Omala Bahadur,58,Vardo,0,Hofn,0,False,Lives in Vardo 283,"$2,663",2663,I don't earn anything.,0,no_income,,Graduated from Hofn University,university
+Hofn,5,0,v4ala9bnzr,Cameron Edwards,47,Hofn,0,Hayarano,1,True,Lives in Hofn 601,"$9,159",9159,I earn around $58 a day as a carpenter.,58,numeric,Carpenter,Graduated from Helluland High School,high_school
+Hofn,5,0,gnrayylfhb,Nina Carlsen,32,Hofn,0,Vardo,0,False,Lives in Hofn 1068,"$10,620",10620,I earn around $75 a day as a health professor.,75,numeric,Health Professor,Graduated from Hofn University,university
+Hofn,5,0,3n74um2ump,Chanda Basu,58,Hofn,0,Pauma,2,True,Lives in Hofn 862,"$6,130",6130,I don't earn anything.,0,no_income,Ornithological Society,Graduated from Hofn University,university
+Hofn,5,0,apea94awgl,Paul Solberg,41,Hofn,0,Hofn,0,False,Lives in Hofn 328,"$8,928",8928,I earn around $60 a day as a society professor.,60,numeric,Society Professor,Graduated from Hofn University,university
+Hofn,5,0,pyl9ygv3rn,Miho Kimura,48,Hofn,0,Helluland,0,False,Lives in Hofn 320,"$8,016",8016,I earn around $54 a day as a pig farmer.,54,numeric,Pig Farmer,Graduated from Hofn University,university
+Hofn,5,0,nwbwuscqkt,Lea Carlsen,34,Hofn,0,Helluland,0,False,Lives in Hofn 609,"$3,975",3975,I don't earn anything.,0,no_income,University student,Graduated from Helluland High School,high_school
+Bjurholm,1,0,5fb8ggbmks,Andrej Koch,26,Bjurholm,0,Hofn,0,False,Lives in Bjurholm 207,"$3,959",3959,I earn around $41 a day as a confectioner.,41,numeric,Confectioner,Graduated from Blonduos High School,high_school
+Bjurholm,1,0,csc655uggh,Finlay Crawford,26,Bjurholm,0,Arcadia,1,True,Lives in Bjurholm 238,"$5,297",5297,I earn around $25 a day as a waiter.,25,numeric,Waiter,Graduated from Akkeshi High School,high_school
+Bjurholm,1,0,y7r9pzj6f6,Ryan McCarthy,50,Bjurholm,0,Arcadia,1,True,Lives in Bjurholm 430,"$7,663",7663,I earn around $31 a day as a baker.,31,numeric,Baker,Graduated from Hofn University,university
+Bjurholm,1,0,mssluc4sp3,Corina Suzuki,67,Bjurholm,0,Talu,2,True,Lives in Bjurholm 38,"$2,506",2506,I don't earn anything.,0,no_income,Book Club,Graduated from Talu High School,high_school
+Bjurholm,1,0,kmsxtrhxd7,Kaeda Connolly,33,Bjurholm,0,Kiyobico,1,True,Lives in Bjurholm 111,"$8,006",8006,I earn around $88 a day as a fisherman.,88,numeric,Fisherman,Graduated from Arcadia High School,high_school
+Bjurholm,1,0,ejg7mxs35u,Electra Sorensen,45,Bjurholm,0,Helluland,0,False,Lives in Bjurholm 16,"$3,936",3936,I don't earn anything.,0,no_income,,Graduated from Hofn University,university
+Reading,6,1,zzzxl5cef6,Bindi Kulkarni,59,Reading,1,Hayarano,1,False,Lives in Reading 707,"$6,456",6456,I don't earn anything.,0,no_income,Running Club,Graduated from University of Arcadia,university
+Reading,6,1,arwm6nnrqp,Helsa Solberg,54,Reading,1,Biruwa,1,False,Lives in Reading 544,"$11,808",11808,I earn around $58 a day as a acupuncturist.,58,numeric,Acupuncturist,Graduated from Biruwa High School,high_school
+Reading,6,1,lb2tm2lz7c,Takahiro Sato,61,Reading,1,Arcadia,1,False,Lives in Reading 733,"$5,748",5748,I don't earn anything.,0,no_income,,Graduated from University of Arcadia,university
+Reading,6,1,hsh48urvd3,Magritte Page,56,Reading,1,Akkeshi,1,False,Lives in Reading 860,"$12,729",12729,I earn around $28 a day as a barista.,28,numeric,Barista,Graduated from Akkeshi High School,high_school
+Reading,6,1,zc78egpasc,Hanima Gadhavi,61,Reading,1,Kiyobico,1,False,Lives in Reading 435,"$3,007",3007,I don't earn anything.,0,no_income,,Graduated from Arcadia High School,high_school
+Reading,6,1,2yzrh2pzy5,Daiki Price,50,Reading,1,Akkeshi,1,False,Lives in Reading 161,"$7,176",7176,I earn around $35 a day as a butcher.,35,numeric,Butcher,Graduated from University of Arcadia,university
+Arcadia,8,1,ulhwf9ndeq,Reynard Moore,54,Arcadia,1,Valais,2,True,Lives in Arcadia 534,"$14,627",14627,I earn around $101 a day as a lawyer.,101,numeric,Lawyer,Graduated from University of Arcadia,university
+Arcadia,8,1,g6zv75sgs3,Georgina Brown,22,Arcadia,1,Reading,1,False,Lives in Arcadia 1504,"$3,842",3842,I don't earn anything.,0,no_income,University student,Graduated from Reading High School,high_school
+Arcadia,8,1,ahnztzmr92,Lucie Lund,28,Arcadia,1,Arcadia,1,False,Lives in Arcadia 15,"$3,752",3752,I earn around $52 a day as a toymaker.,52,numeric,Toymaker,Graduated from University of Arcadia,university
+Arcadia,8,1,ycwbgzmmxb,Eden Blomgren,37,Arcadia,1,Reading,1,False,Lives in Arcadia 1648,"$6,554",6554,I earn around $78 a day as a fisherman.,78,numeric,Fisherman,Graduated from Reading High School,high_school
+Arcadia,8,1,6v5ylw7fzl,Roy Bruce,45,Arcadia,1,Reading,1,False,Lives in Arcadia 899,"$8,015",8015,I earn around $106 a day as a lawyer.,106,numeric,Lawyer,Graduated from University of Arcadia,university
+Arcadia,8,1,fgu96lzqga,Hallmar Eklund,55,Arcadia,1,Biruwa,1,False,Lives in Arcadia 1249,"$7,577",7577,I earn around $44 a day as a hairdresser.,44,numeric,Hairdresser,Graduated from University of Arcadia,university
+Akkeshi,14,1,m56jte7zcx,Anund Bager,31,Akkeshi,1,Takazaki,1,False,Lives in Akkeshi 163,"$5,451",5451,I earn around $57 a day as a constable.,57,numeric,Constable,Graduated from University of Arcadia,university
+Akkeshi,14,1,2dhhpsgq7u,Mark Morris,27,Akkeshi,1,Arcadia,1,False,Lives in Akkeshi 104,"$3,794",3794,I earn around $38 a day as a cheesemaker.,38,numeric,Cheesemaker,Graduated from Arcadia High School,high_school
+Akkeshi,14,1,nhjfjyd7q9,Sayumi Erikawa,60,Akkeshi,1,Arcadia,1,False,Lives in Akkeshi 125,"$6,727",6727,I earn around $63 a day as a midwife.,63,numeric,Midwife,Graduated from University of Arcadia,university
+Akkeshi,14,1,xt2cr9duj6,Selvan Sharma,39,Akkeshi,1,Nelson,1,False,Lives in Akkeshi 247,"$4,692",4692,I earn around $36 a day as a dairy farmer.,36,numeric,Dairy Farmer,Graduated from Nelson High School,high_school
+Akkeshi,14,1,p6ralrcaux,Ivonne Ernst,24,Akkeshi,1,Vardo,0,True,Lives in Akkeshi 476,"$3,603",3603,I earn around $40 a day as a sheep farmer.,40,numeric,Sheep Farmer,Graduated from Vardo High School,high_school
+Akkeshi,14,1,yc4h3aey7r,Ross Kimura,60,Akkeshi,1,Biruwa,1,False,Lives in Akkeshi 529,"$3,875",3875,I don't earn anything.,0,no_income,Hiking Club,Graduated from University of Arcadia,university
+Pauma,15,2,apucfmnhcg,Ava Regan,62,Pauma,2,Arcadia,1,True,Lives in Pauma 10,"$4,661",4661,I don't earn anything.,0,no_income,,Graduated from University of Arcadia,university
+Pauma,15,2,cc38hemlg6,Maryse Ferrand,26,Pauma,2,Arcadia,1,True,Lives in Pauma 88,$761,761,I earn around $37 a day as a sugarcane farmer.,37,numeric,Sugarcane Farmer,Graduated from Arcadia High School,high_school
+Pauma,15,2,amu4sqch74,Fabrice Petit,30,Pauma,2,Shinobi,1,True,Lives in Pauma 345,"$1,593",1593,I earn around $37 a day as a butcher.,37,numeric,Butcher,Graduated from Shinobi High School,high_school
+Pauma,15,2,hg9as44hgd,Lena Carlsen,22,Pauma,2,Maeva,2,False,Lives in Pauma 339,"$1,019",1019,I earn around $34 a day as a dairy farmer.,34,numeric,Dairy Farmer,Graduated from Mahuti High School,high_school
+Pauma,15,2,cgcj7vmnwk,Brielle Jensen,93,Pauma,2,Pauma,2,False,Lives in Pauma 38,$285,285,I don't earn anything.,0,no_income,Book Club,Graduated from Colmar University,university
+Pauma,15,2,up93lrtzcl,Dulari Pillai,50,Pauma,2,Colmar,2,False,Lives in Pauma 463,"$4,689",4689,I don't earn anything.,0,no_income,Swimming Club,Graduated from Colmar University,university
+Valais,16,2,2mbhpmgh22,Daniel Eklund,68,Valais,2,Nidoma,2,False,Lives in Valais 109,$601,601,I don't earn anything.,0,no_income,,Graduated from Colmar High School,high_school
+Valais,16,2,fxuyx66skg,Selvan Ganaka,70,Valais,2,Buyan,,,Lives in Valais 326,$998,998,I don't earn anything.,0,no_income,,Graduated from Colmar University,university
+Valais,16,2,xx4v57p44s,Barbara Marx,64,Valais,2,Vardo,0,True,Lives in Valais 356,"$4,036",4036,I don't earn anything.,0,no_income,,Graduated from Hofn University,university
+Valais,16,2,87pfmpqspd,Severin Watanabe,28,Valais,2,Colmar,2,False,Lives in Valais 354,"$3,385",3385,I earn around $84 a day as a astronomer.,84,numeric,Astronomer,Graduated from Colmar University,university
+Valais,16,2,dusr2pcedk,Audrey Regan,58,Valais,2,Colmar,2,False,Lives in Valais 377,"$3,364",3364,I earn around $49 a day as a elementary school teacher.,49,numeric,Elementary School Teacher,Graduated from Colmar University,university
+Valais,16,2,y34y92jcxk,Riley Kimura,69,Valais,2,Nelson,1,True,Lives in Valais 441,$510,510,I don't earn anything.,0,no_income,,Graduated from Nelson High School,high_school
+Talu,26,2,7esnfnsefq,Maaran Ghosh,64,Talu,2,Colmar,2,False,Lives in Talu 125,"$3,650",3650,I don't earn anything.,0,no_income,,Graduated from Colmar University,university
+Talu,26,2,qpgfpkeayu,Juliette Morris,60,Talu,2,Talu,2,False,Lives in Talu 129,"$4,069",4069,I don't earn anything.,0,no_income,,Graduated from Colmar University,university
+Talu,26,2,hqgq98jej2,Sheila Black,66,Talu,2,Arcadia,1,True,Lives in Talu 150,"$3,785",3785,I don't earn anything.,0,no_income,,Graduated from University of Arcadia,university
+Talu,26,2,t8weskx38j,Sandrine Besson,64,Talu,2,Talu,2,False,Lives in Talu 81,$788,788,I don't earn anything.,0,no_income,,Graduated from Colmar High School,high_school
+Talu,26,2,pzqgmm9d3z,Jacob Bager,54,Talu,2,Gordes,2,False,Lives in Talu 196,"$11,984",11984,I earn around $80 a day as a hotel manager.,80,numeric,Hotel Manager,Graduated from Colmar University,university
+Talu,26,2,53d6f5ccwv,Jacques Lund,57,Talu,2,Colmar,2,False,Lives in Talu 208,"$8,181",8181,I earn around $52 a day as a acupuncturist.,52,numeric,Acupuncturist,Graduated from Colmar University,university

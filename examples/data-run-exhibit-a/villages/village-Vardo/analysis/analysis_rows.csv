@@ -1,0 +1,7 @@
+village_name,village_id,island_id,islander_id,islander_name,age,current_village,current_island_id,birth_village,birth_island_id,immigrant_other_island,current_residence_raw,money_summary_raw,money_summary_value,income_response_raw,income_numeric,income_text_normalized,occupation_text,latest_education_event,education_label
+Vardo,0,0,lpsgksm9fd,Magnar Sorensen,48,Vardo,0,Helluland,0,False,Lives in Vardo 670,"$4,175",4175,I earn around $62 a day as a sculptor.,62,numeric,Sculptor,Graduated from Hofn University,university
+Vardo,0,0,gvsyaayt33,Gen Collins,50,Vardo,0,Blonduos,0,False,Lives in Vardo 272,"$2,310",2310,I earn around $27 a day as a barista.,27,numeric,Barista,Graduated from Hofn High School,high_school
+Vardo,0,0,qj4bjwspn3,Akira Morris,50,Vardo,0,Bjurholm,0,False,Lives in Vardo 161,"$7,902",7902,I earn around $35 a day as a florist.,35,numeric,Florist,Graduated from Bjurholm High School,high_school
+Vardo,0,0,cnyn3t7q4l,Darran Docherty,41,Vardo,0,Hofn,0,False,Lives in Vardo 733,"$1,732",1732,I earn around $25 a day as a waiter.,25,numeric,Waiter,Graduated from Hofn University,university
+Vardo,0,0,l974v54vny,Soren Solberg,31,Vardo,0,Hofn,0,False,Lives in Vardo 207,"$2,464",2464,I earn around $39 a day as a musician.,39,numeric,Musician,Graduated from Hofn University,university
+Vardo,0,0,ggn655wzw8,Omala Bahadur,58,Vardo,0,Hofn,0,False,Lives in Vardo 283,"$2,663",2663,I don't earn anything.,0,no_income,,Graduated from Hofn University,university

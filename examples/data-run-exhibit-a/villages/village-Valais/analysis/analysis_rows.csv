@@ -1,0 +1,7 @@
+village_name,village_id,island_id,islander_id,islander_name,age,current_village,current_island_id,birth_village,birth_island_id,immigrant_other_island,current_residence_raw,money_summary_raw,money_summary_value,income_response_raw,income_numeric,income_text_normalized,occupation_text,latest_education_event,education_label
+Valais,16,2,2mbhpmgh22,Daniel Eklund,68,Valais,2,Nidoma,2,False,Lives in Valais 109,$601,601,I don't earn anything.,0,no_income,,Graduated from Colmar High School,high_school
+Valais,16,2,fxuyx66skg,Selvan Ganaka,70,Valais,2,Buyan,,,Lives in Valais 326,$998,998,I don't earn anything.,0,no_income,,Graduated from Colmar University,university
+Valais,16,2,xx4v57p44s,Barbara Marx,64,Valais,2,Vardo,0,True,Lives in Valais 356,"$4,036",4036,I don't earn anything.,0,no_income,,Graduated from Hofn University,university
+Valais,16,2,87pfmpqspd,Severin Watanabe,28,Valais,2,Colmar,2,False,Lives in Valais 354,"$3,385",3385,I earn around $84 a day as a astronomer.,84,numeric,Astronomer,Graduated from Colmar University,university
+Valais,16,2,dusr2pcedk,Audrey Regan,58,Valais,2,Colmar,2,False,Lives in Valais 377,"$3,364",3364,I earn around $49 a day as a elementary school teacher.,49,numeric,Elementary School Teacher,Graduated from Colmar University,university
+Valais,16,2,y34y92jcxk,Riley Kimura,69,Valais,2,Nelson,1,True,Lives in Valais 441,$510,510,I don't earn anything.,0,no_income,,Graduated from Nelson High School,high_school

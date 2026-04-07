@@ -1,0 +1,7 @@
+village_name,village_id,island_id,islander_id,islander_name,age,current_village,current_island_id,birth_village,birth_island_id,immigrant_other_island,current_residence_raw,money_summary_raw,money_summary_value,income_response_raw,income_numeric,income_text_normalized,occupation_text,latest_education_event,education_label
+Bjurholm,1,0,5fb8ggbmks,Andrej Koch,26,Bjurholm,0,Hofn,0,False,Lives in Bjurholm 207,"$3,959",3959,I earn around $41 a day as a confectioner.,41,numeric,Confectioner,Graduated from Blonduos High School,high_school
+Bjurholm,1,0,csc655uggh,Finlay Crawford,26,Bjurholm,0,Arcadia,1,True,Lives in Bjurholm 238,"$5,297",5297,I earn around $25 a day as a waiter.,25,numeric,Waiter,Graduated from Akkeshi High School,high_school
+Bjurholm,1,0,y7r9pzj6f6,Ryan McCarthy,50,Bjurholm,0,Arcadia,1,True,Lives in Bjurholm 430,"$7,663",7663,I earn around $31 a day as a baker.,31,numeric,Baker,Graduated from Hofn University,university
+Bjurholm,1,0,mssluc4sp3,Corina Suzuki,67,Bjurholm,0,Talu,2,True,Lives in Bjurholm 38,"$2,506",2506,I don't earn anything.,0,no_income,Book Club,Graduated from Talu High School,high_school
+Bjurholm,1,0,kmsxtrhxd7,Kaeda Connolly,33,Bjurholm,0,Kiyobico,1,True,Lives in Bjurholm 111,"$8,006",8006,I earn around $88 a day as a fisherman.,88,numeric,Fisherman,Graduated from Arcadia High School,high_school
+Bjurholm,1,0,ejg7mxs35u,Electra Sorensen,45,Bjurholm,0,Helluland,0,False,Lives in Bjurholm 16,"$3,936",3936,I don't earn anything.,0,no_income,,Graduated from Hofn University,university

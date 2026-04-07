@@ -1,0 +1,7 @@
+village_name,village_id,island_id,islander_id,islander_name,age,current_village,current_island_id,birth_village,birth_island_id,immigrant_other_island,current_residence_raw,money_summary_raw,money_summary_value,income_response_raw,income_numeric,income_text_normalized,occupation_text,latest_education_event,education_label
+Talu,26,2,7esnfnsefq,Maaran Ghosh,64,Talu,2,Colmar,2,False,Lives in Talu 125,"$3,650",3650,I don't earn anything.,0,no_income,,Graduated from Colmar University,university
+Talu,26,2,qpgfpkeayu,Juliette Morris,60,Talu,2,Talu,2,False,Lives in Talu 129,"$4,069",4069,I don't earn anything.,0,no_income,,Graduated from Colmar University,university
+Talu,26,2,hqgq98jej2,Sheila Black,66,Talu,2,Arcadia,1,True,Lives in Talu 150,"$3,785",3785,I don't earn anything.,0,no_income,,Graduated from University of Arcadia,university
+Talu,26,2,t8weskx38j,Sandrine Besson,64,Talu,2,Talu,2,False,Lives in Talu 81,$788,788,I don't earn anything.,0,no_income,,Graduated from Colmar High School,high_school
+Talu,26,2,pzqgmm9d3z,Jacob Bager,54,Talu,2,Gordes,2,False,Lives in Talu 196,"$11,984",11984,I earn around $80 a day as a hotel manager.,80,numeric,Hotel Manager,Graduated from Colmar University,university
+Talu,26,2,53d6f5ccwv,Jacques Lund,57,Talu,2,Colmar,2,False,Lives in Talu 208,"$8,181",8181,I earn around $52 a day as a acupuncturist.,52,numeric,Acupuncturist,Graduated from Colmar University,university

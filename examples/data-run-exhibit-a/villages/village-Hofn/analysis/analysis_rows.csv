@@ -1,0 +1,7 @@
+village_name,village_id,island_id,islander_id,islander_name,age,current_village,current_island_id,birth_village,birth_island_id,immigrant_other_island,current_residence_raw,money_summary_raw,money_summary_value,income_response_raw,income_numeric,income_text_normalized,occupation_text,latest_education_event,education_label
+Hofn,5,0,v4ala9bnzr,Cameron Edwards,47,Hofn,0,Hayarano,1,True,Lives in Hofn 601,"$9,159",9159,I earn around $58 a day as a carpenter.,58,numeric,Carpenter,Graduated from Helluland High School,high_school
+Hofn,5,0,gnrayylfhb,Nina Carlsen,32,Hofn,0,Vardo,0,False,Lives in Hofn 1068,"$10,620",10620,I earn around $75 a day as a health professor.,75,numeric,Health Professor,Graduated from Hofn University,university
+Hofn,5,0,3n74um2ump,Chanda Basu,58,Hofn,0,Pauma,2,True,Lives in Hofn 862,"$6,130",6130,I don't earn anything.,0,no_income,Ornithological Society,Graduated from Hofn University,university
+Hofn,5,0,apea94awgl,Paul Solberg,41,Hofn,0,Hofn,0,False,Lives in Hofn 328,"$8,928",8928,I earn around $60 a day as a society professor.,60,numeric,Society Professor,Graduated from Hofn University,university
+Hofn,5,0,pyl9ygv3rn,Miho Kimura,48,Hofn,0,Helluland,0,False,Lives in Hofn 320,"$8,016",8016,I earn around $54 a day as a pig farmer.,54,numeric,Pig Farmer,Graduated from Hofn University,university
+Hofn,5,0,nwbwuscqkt,Lea Carlsen,34,Hofn,0,Helluland,0,False,Lives in Hofn 609,"$3,975",3975,I don't earn anything.,0,no_income,University student,Graduated from Helluland High School,high_school

@@ -1,0 +1,7 @@
+village_name,village_id,island_id,islander_id,islander_name,age,current_village,current_island_id,birth_village,birth_island_id,immigrant_other_island,current_residence_raw,money_summary_raw,money_summary_value,income_response_raw,income_numeric,income_text_normalized,occupation_text,latest_education_event,education_label
+Reading,6,1,zzzxl5cef6,Bindi Kulkarni,59,Reading,1,Hayarano,1,False,Lives in Reading 707,"$6,456",6456,I don't earn anything.,0,no_income,Running Club,Graduated from University of Arcadia,university
+Reading,6,1,arwm6nnrqp,Helsa Solberg,54,Reading,1,Biruwa,1,False,Lives in Reading 544,"$11,808",11808,I earn around $58 a day as a acupuncturist.,58,numeric,Acupuncturist,Graduated from Biruwa High School,high_school
+Reading,6,1,lb2tm2lz7c,Takahiro Sato,61,Reading,1,Arcadia,1,False,Lives in Reading 733,"$5,748",5748,I don't earn anything.,0,no_income,,Graduated from University of Arcadia,university
+Reading,6,1,hsh48urvd3,Magritte Page,56,Reading,1,Akkeshi,1,False,Lives in Reading 860,"$12,729",12729,I earn around $28 a day as a barista.,28,numeric,Barista,Graduated from Akkeshi High School,high_school
+Reading,6,1,zc78egpasc,Hanima Gadhavi,61,Reading,1,Kiyobico,1,False,Lives in Reading 435,"$3,007",3007,I don't earn anything.,0,no_income,,Graduated from Arcadia High School,high_school
+Reading,6,1,2yzrh2pzy5,Daiki Price,50,Reading,1,Akkeshi,1,False,Lives in Reading 161,"$7,176",7176,I earn around $35 a day as a butcher.,35,numeric,Butcher,Graduated from University of Arcadia,university

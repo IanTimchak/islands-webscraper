@@ -1,0 +1,7 @@
+village_name,village_id,island_id,islander_id,islander_name,age,current_village,current_island_id,birth_village,birth_island_id,immigrant_other_island,current_residence_raw,money_summary_raw,money_summary_value,income_response_raw,income_numeric,income_text_normalized,occupation_text,latest_education_event,education_label
+Arcadia,8,1,ulhwf9ndeq,Reynard Moore,54,Arcadia,1,Valais,2,True,Lives in Arcadia 534,"$14,627",14627,I earn around $101 a day as a lawyer.,101,numeric,Lawyer,Graduated from University of Arcadia,university
+Arcadia,8,1,g6zv75sgs3,Georgina Brown,22,Arcadia,1,Reading,1,False,Lives in Arcadia 1504,"$3,842",3842,I don't earn anything.,0,no_income,University student,Graduated from Reading High School,high_school
+Arcadia,8,1,ahnztzmr92,Lucie Lund,28,Arcadia,1,Arcadia,1,False,Lives in Arcadia 15,"$3,752",3752,I earn around $52 a day as a toymaker.,52,numeric,Toymaker,Graduated from University of Arcadia,university
+Arcadia,8,1,ycwbgzmmxb,Eden Blomgren,37,Arcadia,1,Reading,1,False,Lives in Arcadia 1648,"$6,554",6554,I earn around $78 a day as a fisherman.,78,numeric,Fisherman,Graduated from Reading High School,high_school
+Arcadia,8,1,6v5ylw7fzl,Roy Bruce,45,Arcadia,1,Reading,1,False,Lives in Arcadia 899,"$8,015",8015,I earn around $106 a day as a lawyer.,106,numeric,Lawyer,Graduated from University of Arcadia,university
+Arcadia,8,1,fgu96lzqga,Hallmar Eklund,55,Arcadia,1,Biruwa,1,False,Lives in Arcadia 1249,"$7,577",7577,I earn around $44 a day as a hairdresser.,44,numeric,Hairdresser,Graduated from University of Arcadia,university

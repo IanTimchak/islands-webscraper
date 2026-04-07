@@ -1,0 +1,7 @@
+village_name,village_id,island_id,islander_id,islander_name,age,current_village,current_island_id,birth_village,birth_island_id,immigrant_other_island,current_residence_raw,money_summary_raw,money_summary_value,income_response_raw,income_numeric,income_text_normalized,occupation_text,latest_education_event,education_label
+Pauma,15,2,apucfmnhcg,Ava Regan,62,Pauma,2,Arcadia,1,True,Lives in Pauma 10,"$4,661",4661,I don't earn anything.,0,no_income,,Graduated from University of Arcadia,university
+Pauma,15,2,cc38hemlg6,Maryse Ferrand,26,Pauma,2,Arcadia,1,True,Lives in Pauma 88,$761,761,I earn around $37 a day as a sugarcane farmer.,37,numeric,Sugarcane Farmer,Graduated from Arcadia High School,high_school
+Pauma,15,2,amu4sqch74,Fabrice Petit,30,Pauma,2,Shinobi,1,True,Lives in Pauma 345,"$1,593",1593,I earn around $37 a day as a butcher.,37,numeric,Butcher,Graduated from Shinobi High School,high_school
+Pauma,15,2,hg9as44hgd,Lena Carlsen,22,Pauma,2,Maeva,2,False,Lives in Pauma 339,"$1,019",1019,I earn around $34 a day as a dairy farmer.,34,numeric,Dairy Farmer,Graduated from Mahuti High School,high_school
+Pauma,15,2,cgcj7vmnwk,Brielle Jensen,93,Pauma,2,Pauma,2,False,Lives in Pauma 38,$285,285,I don't earn anything.,0,no_income,Book Club,Graduated from Colmar University,university
+Pauma,15,2,up93lrtzcl,Dulari Pillai,50,Pauma,2,Colmar,2,False,Lives in Pauma 463,"$4,689",4689,I don't earn anything.,0,no_income,Swimming Club,Graduated from Colmar University,university
