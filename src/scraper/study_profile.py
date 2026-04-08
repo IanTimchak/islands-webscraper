@@ -1,5 +1,5 @@
-VILLAGE_TO_ISLAND: dict[str, int] = {
-    # Ironbard
+PLACE_TO_ISLAND: dict[str, int] = {
+    # Ironbard towns
     "Vardo": 0,
     "Bjurholm": 0,
     "Helluland": 0,
@@ -7,7 +7,7 @@ VILLAGE_TO_ISLAND: dict[str, int] = {
     "Helvig": 0,
     "Hofn": 0,
 
-    # Providence
+    # Providence towns
     "Reading": 1,
     "Nelson": 1,
     "Arcadia": 1,
@@ -18,7 +18,7 @@ VILLAGE_TO_ISLAND: dict[str, int] = {
     "Hayarano": 1,
     "Akkeshi": 1,
 
-    # Bonne Santé
+    # Bonne Santé towns
     "Pauma": 2,
     "Valais": 2,
     "Kinsale": 2,
@@ -31,4 +31,37 @@ VILLAGE_TO_ISLAND: dict[str, int] = {
     "Riroua": 2,
     "Nidoma": 2,
     "Talu": 2,
+
+    # Ironbard features
+    "Laerer": 0,
+    "Abel": 0,
+    "Tapte Fjell": 0,
+    "Snowdell Forest": 0,
+    "Fallvale Woods": 0,
+    "Cape Scientia": 0,
+    "Makt": 0,
+    "Deltaker": 0,
+    "Inter": 0,
+    "Sokelse": 0,
+    "Dracmoor": 0,
+
+    # Providence features
+    "Lost Mountains": 1,
+    "Gwaja Bay": 1,
+    "Seowong Bay": 1,
+    "Hayakami Badlands": 1,
+    "Jama": 1,
+    "Kaiseki": 1,
+    "Defa": 1,
+    "Okina": 1,
+
+    # Bonne Santé features
+    "Montagnes Perdues": 2,
+    "Pele": 2,
+    "Nanu Forest": 2,
+    "Endum Plains": 2,
+    "Riludo Sea": 2,
+    "Point Hallow": 2,
+    "Thorn Lake": 2,
+    "Cape Labore": 2,
 }

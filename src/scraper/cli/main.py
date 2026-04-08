@@ -46,7 +46,7 @@ from scraper.services.persistence import PersistenceService
 from scraper.services.progress import ConsoleProgressReporter
 from scraper.services.sampling import SamplingService
 from scraper.services.workflow import CollectionWorkflow
-from scraper.study_profile import VILLAGE_TO_ISLAND
+from scraper.study_profile import PLACE_TO_ISLAND
 
 app = typer.Typer(
     help=(
@@ -1041,7 +1041,7 @@ def collect_normalize_derive_participant(
             progress=progress,
         )
         normalization = NormalizationService()
-        derivation = DerivationService(VILLAGE_TO_ISLAND)
+        derivation = DerivationService(PLACE_TO_ISLAND)
 
         village = collector.fetch_village(village_name)
         collected = data_collection.collect_participant(
@@ -1076,7 +1076,7 @@ def collect_study_default_and_derive_participant(
             progress=progress,
         )
         normalization = NormalizationService()
-        derivation = DerivationService(VILLAGE_TO_ISLAND)
+        derivation = DerivationService(PLACE_TO_ISLAND)
 
         village = collector.fetch_village(village_name)
         collected = data_collection.collect_participant(
@@ -1128,7 +1128,7 @@ def collect_normalize_derive_and_save_participant(
             progress=progress,
         )
         normalization = NormalizationService()
-        derivation = DerivationService(VILLAGE_TO_ISLAND)
+        derivation = DerivationService(PLACE_TO_ISLAND)
 
         resolved_run_id = run_id or _build_participant_run_id(
             village_name=village_name,
@@ -1183,7 +1183,7 @@ def collect_study_default_and_save_participant(
             progress=progress,
         )
         normalization = NormalizationService()
-        derivation = DerivationService(VILLAGE_TO_ISLAND)
+        derivation = DerivationService(PLACE_TO_ISLAND)
 
         resolved_run_id = run_id or _build_participant_run_id(
             village_name=village_name,
@@ -1378,7 +1378,7 @@ def collect_village_data_and_save(
             progress=progress,
         )
         normalization = NormalizationService()
-        derivation = DerivationService(VILLAGE_TO_ISLAND)
+        derivation = DerivationService(PLACE_TO_ISLAND)
         workflow = CollectionWorkflow(
             collector=collector,
             sampling=sampling,
@@ -1504,7 +1504,7 @@ def collect_study_default_village_and_save(
             progress=progress,
         )
         normalization = NormalizationService()
-        derivation = DerivationService(VILLAGE_TO_ISLAND)
+        derivation = DerivationService(PLACE_TO_ISLAND)
         workflow = CollectionWorkflow(
             collector=collector,
             sampling=sampling,
@@ -1654,7 +1654,7 @@ def collect_study_data_and_save(
             progress=progress,
         )
         normalization = NormalizationService()
-        derivation = DerivationService(VILLAGE_TO_ISLAND)
+        derivation = DerivationService(PLACE_TO_ISLAND)
         workflow = CollectionWorkflow(
             collector=collector,
             sampling=sampling,
@@ -1736,7 +1736,7 @@ def collect_study_default_data_and_save(
             progress=progress,
         )
         normalization = NormalizationService()
-        derivation = DerivationService(VILLAGE_TO_ISLAND)
+        derivation = DerivationService(PLACE_TO_ISLAND)
         workflow = CollectionWorkflow(
             collector=collector,
             sampling=sampling,
@@ -1788,7 +1788,7 @@ def resume_study_run(
             progress=progress,
         )
         normalization = NormalizationService()
-        derivation = DerivationService(VILLAGE_TO_ISLAND)
+        derivation = DerivationService(PLACE_TO_ISLAND)
         workflow = CollectionWorkflow(
             collector=collector,
             sampling=sampling,

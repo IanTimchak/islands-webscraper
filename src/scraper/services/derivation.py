@@ -6,29 +6,29 @@ from scraper.models.normalized import NormalizedParticipant
 
 class DerivationService:
     """
-    Minimal derivation layer for deterministic study variables.
+    Deterministic derivation layer for study variables.
 
-    This service intentionally does only:
-    - village -> island lookup
-    - current island derivation
-    - birth island derivation
-    - immigrant status derivation
-    - compact education categorization for analysis output
-
-    Subjective recodes like occupation grouping are left for downstream transforms.
+    Rules:
+    - Map known place names (towns and geographic features) to island ids.
+    - Treat a present but unmapped birthplace as off-map/external.
+    - For this study, an off-map/external birthplace counts as immigrant.
+    - Only return None for immigrant status when birthplace is actually missing
+      or the participant's current island cannot be determined.
     """
 
-    def __init__(self, village_to_island: dict[str, int]) -> None:
-        self.village_to_island = village_to_island
+    def __init__(self, place_to_island: dict[str, int]) -> None:
+        self.place_to_island = place_to_island
 
     def derive_analysis_row(
         self,
         normalized: NormalizedParticipant,
     ) -> AnalysisRow:
-        current_island_id = self._map_village_to_island(normalized.current_village)
-        birth_island_id = self._map_village_to_island(normalized.birth_village)
+        current_island_id = self._map_place_to_island(normalized.current_village)
+        birth_island_id = self._map_place_to_island(normalized.birth_village)
+
         immigrant_other_island = self._derive_immigrant_other_island(
             current_island_id=current_island_id,
+            birth_place=normalized.birth_village,
             birth_island_id=birth_island_id,
         )
 
@@ -59,18 +59,35 @@ class DerivationService:
             education_label=education_label,
         )
 
-    def _map_village_to_island(self, village_name: str | None) -> int | None:
-        if not village_name:
+    def _map_place_to_island(self, place_name: str | None) -> int | None:
+        if not place_name:
             return None
-        return self.village_to_island.get(village_name)
+        return self.place_to_island.get(place_name)
 
     def _derive_immigrant_other_island(
         self,
         current_island_id: int | None,
+        birth_place: str | None,
         birth_island_id: int | None,
     ) -> bool | None:
-        if current_island_id is None or birth_island_id is None:
+        """
+        Derive immigrant status for the study.
+
+        Interpretation:
+        - missing birthplace -> unknown
+        - unmapped/off-map birthplace -> immigrant
+        - mapped birthplace on a different island -> immigrant
+        - mapped birthplace on the same island -> not immigrant
+        """
+        if current_island_id is None:
             return None
+
+        if not birth_place:
+            return None
+
+        if birth_island_id is None:
+            return True
+
         return current_island_id != birth_island_id
 
     def _derive_education(
