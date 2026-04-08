@@ -345,7 +345,7 @@ Current high-value test areas:
 
 See the full operator guide:
 
-- [`Full Usage Guide`](docs/full-usage-guide.md)
+- [`Full Usage Guide`](docs/islands_full_usage_guide.md)
 
 Additional project docs:
 
