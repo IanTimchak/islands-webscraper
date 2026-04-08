@@ -349,7 +349,7 @@ See the full operator guide:
 
 Additional project docs:
 
-- [`API Reference`](docs/api.md) - HTTP endpoint model, Python client API, and all service and sampling methods
+- [`API Reference`](docs/api.md) - HTTP endpoint model, extracted from site network events
 - [`Architecture`](docs/architecture.md) - repository structure, layer responsibilities, and design principles
 - [`Data Model`](docs/data-model.md) - all Pydantic models across the raw, normalized, and analysis stages
 - [`Sampling Policy`](docs/sampling-policy.md) - the project’s sampling methodology, including purposive village choice, random household sampling, reserve handling, and reproducibility policy
