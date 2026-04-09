@@ -345,11 +345,11 @@ Current high-value test areas:
 
 See the full operator guide:
 
-- [`Full Usage Guide`](docs/full-usage-guide.md)
+- [`Full Usage Guide`](docs/islands_full_usage_guide.md)
 
 Additional project docs:
 
-- [`API Reference`](docs/api.md) - HTTP endpoint model, Python client API, and all service and sampling methods
+- [`API Reference`](docs/api.md) - HTTP endpoint model, extracted from site network events
 - [`Architecture`](docs/architecture.md) - repository structure, layer responsibilities, and design principles
 - [`Data Model`](docs/data-model.md) - all Pydantic models across the raw, normalized, and analysis stages
 - [`Sampling Policy`](docs/sampling-policy.md) - the project’s sampling methodology, including purposive village choice, random household sampling, reserve handling, and reproducibility policy
