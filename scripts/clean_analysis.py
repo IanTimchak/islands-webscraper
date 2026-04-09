@@ -63,10 +63,13 @@ OCCUPATION_LEVEL = {
     "Horticultural Association": 0,
     "Cycling Club": 0,
     "University student": 0,
-
+    "Speleological Society": 0,
+    "Running Club": 0,
+    "Painting Collective": 0,
+    "Chess Club": 0,
+    "Ornithological Society": 0,
     # Low
     "Tea Farmer": 1,
-    "Park Ranger": 1,
     "Bee Keeper": 1,
     "Gardener": 1,
     "Waiter": 1,
@@ -78,8 +81,6 @@ OCCUPATION_LEVEL = {
     "Wheat Farmer": 1,
     "Fisherman": 1,
     "Coffee Farmer": 1,
-    "Miller": 1,
-    "Sawyer": 1,
     "Garbage Collector": 1,
     "Dairy Farmer": 1,
     "Postman": 1,
@@ -87,25 +88,26 @@ OCCUPATION_LEVEL = {
     "Potato Farmer": 1,
     "Kitchen Hand": 1,
     "Hunter": 1,
-    "Carpenter": 1,
     "Sheep Farmer": 1,
     "Nanny": 1,
     "Sugarcane Farmer": 1,
     "Cleaner": 1,
     "Barista": 1,
-    "Florist": 1,
     "Doorman": 1,
-    "Concierge": 1,
-    "Sailor": 1,
-
+    "Flower Farmer": 1,
+    "Apple Farmer": 1,
+    "Chimney Sweep": 1,  # moved from 2: manual/routine, low barrier
+    "Pet Groomer": 1,    # moved from 2: low-skill service
+    "Hairdresser": 1,    # moved from 2: licensed but low-status trade
+    "Coachman": 1,       # moved from 2: driver/transport labor
+    "Tour Guide": 1,     # moved from 2: low barrier, service role
+    "Magician": 1,       # moved from 2: entertainment, no formal credential
     # Middle
     "Plumber": 2,
     "Actor": 2,
-    "Dentist": 2,
     "Midwife": 2,
     "Accountant": 2,
     "Jeweller": 2,
-    "Chimney Sweep": 2,
     "Arborist": 2,
     "Constable": 2,
     "Turner": 2,
@@ -118,12 +120,9 @@ OCCUPATION_LEVEL = {
     "Butcher": 2,
     "Cabinetmaker": 2,
     "Dressmaker": 2,
-    "Pet Groomer": 2,
-    "Historian": 2,
     "Musician": 2,
     "Brewer": 2,
     "Toymaker": 2,
-    "Magician": 2,
     "Detective": 2,
     "Sculptor": 2,
     "Dancer": 2,
@@ -131,15 +130,35 @@ OCCUPATION_LEVEL = {
     "Librarian": 2,
     "Plasterer": 2,
     "Bricklayer": 2,
-    "Hairdresser": 2,
     "Acupuncturist": 2,
     "Tailor": 2,
-    "Coachman": 2,
     "Stonemason": 2,
     "Painter": 2,
     "Engraver": 2,
     "Courtesan": 2,
-
+    "Perfumer": 2,
+    "Apothecary": 2,
+    "Physiotherapist": 2,
+    "Audiologist": 2,
+    "Speech Therapist": 2,
+    "Author": 2,
+    "Joiner": 2,
+    "Shipwright": 2,
+    "Journalist": 2,
+    "Wine Maker": 2,
+    "Confectioner": 2,
+    "Potter": 2,
+    "Calligrapher": 2,
+    "Nutritionist": 2,    # moved from 3: variable credentialing
+    "Hotel Manager": 2,   # moved from 3: managerial but not licensed profession
+    "Carpenter": 2,       # moved from 1: skilled trade by definition
+    "Baker": 2,           # moved from 1: craft skill, often own business
+    "Sailor": 2,          # moved from 1: requires navigation/specialized skill
+    "Miller": 2,          # moved from 1: operates machinery, often business owner
+    "Sawyer": 2,          # moved from 1: skilled lumber processing
+    "Florist": 2,         # moved from 1: creative/design, often self-employed
+    "Concierge": 2,       # moved from 1: service management, requires expertise
+    "Park Ranger": 2,     # moved from 1: trained, law enforcement + conservation
     # High
     "Elementary School Principal": 3,
     "Education Professor": 3,
@@ -152,8 +171,17 @@ OCCUPATION_LEVEL = {
     "Science Professor": 3,
     "Society Professor": 3,
     "Law Professor": 3,
-    "Nutritionist": 3,
-    "Hotel Manager": 3,
+    "Architecture Professor": 3,
+    "Mathematics Professor": 3,
+    "Tinkering Professor": 3,
+    "Health Professor": 3,
+    "Architect": 3,
+    "Lawyer": 3,
+    "Dentist": 3,         # moved from 2: full professional degree, same tier as Doctor
+    "Historian": 3,       # moved from 2: typically academic with advanced degree
+    "Botanist": 3,        # moved from 2: scientific professional, usually PhD-level
+    # Retired
+    # (none listed, but 4 = retired per scheme)
 }
 
 
